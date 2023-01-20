@@ -8,6 +8,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 
 
 @Slf4j
+@Component
 public class ConnectListener implements ApplicationListener<SessionConnectEvent> {
 
 
