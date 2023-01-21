@@ -9,10 +9,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MessageNewDto {
-    private String from;
-    private String text;
-    private MessageType type;
-    public enum  MessageType{
-        CHAT,LEAVE,JOIN
-    }
+    private String name;
+    private String message;
 }

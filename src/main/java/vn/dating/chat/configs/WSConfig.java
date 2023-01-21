@@ -1,73 +1,71 @@
 package vn.dating.chat.configs;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.converter.DefaultContentTypeResolver;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.converter.MessageConverter;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.MimeTypeUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.socket.config.annotation.AbstractWebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import vn.dating.chat.dto.MessageNewDto;
 import vn.dating.chat.dto.OutputMessage;
+import vn.dating.chat.dto.SessionIdMessage;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
 @Slf4j
-public class WSConfig extends AbstractWebSocketMessageBrokerConfigurer {
+public class WSConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Autowired
+    private MyHandshakeInterceptor handshakeInterceptor;
 
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/topic");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/chat");
-        registry.addEndpoint("/chat").withSockJS();
+//        registry.addEndpoint("/chat");
+//        registry.addEndpoint("/chat").withSockJS();
+//                registry.addEndpoint("/chat");
+//        registry.addEndpoint("/chat").withSockJS();
+
+//        registry.addEndpoint("/ws")
+//                .addInterceptors(new MyHandshakeInterceptor())
+//        .setAllowedOrigins("http://localhost:5500","http://localhost:3000").
+//                withSockJS();
+
+        registry.addEndpoint("/ws")
+   .withSockJS();
     }
 
-    @Override
-    public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-        DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
-        resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
-        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
-        converter.setObjectMapper(new ObjectMapper());
-        converter.setContentTypeResolver(resolver);
-        messageConverters.add(converter);
-        return false;
+    @EventListener
+    public void handleWebSocketConnectListener(SessionConnectEvent event) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = accessor.getSessionId();
+        log.info("sessionId {}",sessionId);
+
+        // sessionId is the connection key
     }
 
 
-    @Controller
-    @RequestMapping("/")
-    public class WSController {
 
-        @MessageMapping("/chat")
-        @SendTo("/topic/messages")
-        public OutputMessage send(String str) throws Exception {
-            System.out.println("chat");
-            MessageNewDto message = new MessageNewDto("thang","dang", MessageNewDto.MessageType.CHAT);
-            final String time = new SimpleDateFormat("HH:mm").format(new Date());
-            return new OutputMessage(message.getFrom(), message.getText(), time);
-        }
-    }
+
+
+
 
 }

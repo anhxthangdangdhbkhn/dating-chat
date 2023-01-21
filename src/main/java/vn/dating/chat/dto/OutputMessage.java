@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OutputMessage {
-    private String from;
-    private String text;
+    private String name;
+    private String message;
     private String time;
 }
