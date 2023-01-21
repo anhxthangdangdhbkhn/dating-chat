@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>WebSocket Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.4.0/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+
+<body>
+  <h1>WebSocket Example</h1>
+  <button type="button" id="connect-button">Connect</button>
+  <button type="button" id="disconnect-button" disabled>Disconnect</button>
+  <label for="name">Name:</label><input type="text" id="name" />
+  
+    
+    <form>
+
+      <label for="message">Message:</label>
+      <input type="text" id="public-message" disabled />
+      <button type="button" id="send-button" disabled>Send</button>
+    </form>
+
+    <form>
+    <label for="name">Send to</label>
+    <input type="text" id="sendto" disabled />
+    <label for="name">Private</label>
+    <input type="text" id="private-message" disabled />
+    <button type="button" id="private-button" disabled>Send</button>
+    </form>
+
+  <div id="output"></div>
+  <script>
+    var socket;
+    var stompClient;
+
+    // Connect button click event
+    document.querySelector("#connect-button").addEventListener("click", function (event) {
+      var name = document.querySelector("#name").value;
+      socket = new SockJS('http://localhost:1999/ws',
+                {debug: true});
+      stompClient = Stomp.over(socket);
+      stompClient.connect({}, function (frame) {
+        console.log('Get header ...............: ');
+        console.log('Connected: ' + frame);
+        console.log('Get header ...............: ');
+        console.log('Subprotocol: ' + socket.protocol);
+        console.log('Extensions: ' + socket.extensions);
+        document.querySelector("#disconnect-button").disabled = false;
+        document.querySelector("#connect-button").disabled = true;
+        document.querySelector("#public-message").disabled = false;
+        document.querySelector("#send-button").disabled = false;
+        document.querySelector("#private-button").disabled = false;
+        document.querySelector("#private-message").disabled = false;
+        document.querySelector("#sendto").disabled = false;
+        
+
+        stompClient.subscribe('/topic/greetings', function (greeting) {
+          var output = document.querySelector("#output");
+          console.log("data response")
+          console.log(JSON.parse(greeting.body).name)
+          output.innerHTML += "<p>" + JSON.parse(greeting.body).name + ": " +
+            JSON.parse(greeting.body).message + " :  " + JSON.parse(greeting.body).time + "</p>";
+        });
+        stompClient.subscribe('/topic/sessionId', function (sessionIdMessage) {
+        var sessionId = sessionIdMessage.body;
+        console.log("Session id: " + sessionId);
+        });
+
+        stompClient.send("/app/hello", {}, JSON.stringify({ 'name': name, 'message': 'test' }));
+      });
+    });
+
+    // Send button click event
+    document.querySelector("#send-button").addEventListener("click", function (event) {
+      var message = document.querySelector("#public-message").value;
+      var name = document.querySelector("#name").value;
+      stompClient.send("/app/hello", {}, JSON.stringify({ 'name': name, 'message': message }));
+
+
+      document.querySelector("#public-message").value = "";
+    });
+
+    // Send button private click event
+    document.querySelector("#private-button").addEventListener("click", function (event) {
+      var sendto = document.querySelector("#sendto").value;
+      var message = document.querySelector("#private-message").value;
+      stompClient.send("/app/chat", {}, JSON.stringify({ 'sendto': sendto, 'message': message }));
+
+      stompClient.send("/app/message", {}, JSON.stringify({ 
+        'chatId': sendto,
+        'senderId':"123",
+        'recipientId':"123",
+        'content': message }));
+
+
+      document.querySelector("#private-message").value = "";
+    });
+
+    // Disconnect button click event
+    document.querySelector("#disconnect-button").addEventListener("click", function (event) {
+      stompClient.disconnect();
+      console.log("WebSocket disconnected!");
+      document.querySelector("#disconnect-button").disabled = true;
+      document.querySelector("#connect-button").disabled = false;
+      document.querySelector("#public-message").disabled = true;
+      document.querySelector("#send-button").disabled = true;
+      document.querySelector("#private-button").disabled = true;
+      document.querySelector("#private-message").disabled = true;
+      document.querySelector("#sendto").disabled = true;
+
+      
+
+    });
+  </script>
+</body>
+
+</html>
