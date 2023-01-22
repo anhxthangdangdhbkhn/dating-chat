@@ -19,6 +19,7 @@ public class  User extends DateAudit {
     private Long id;
     private String email;
     private String username;
+    private String chat;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<Message> sender;

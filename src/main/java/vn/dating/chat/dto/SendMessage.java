@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class SendMessage {
-    private String sendto;
+    private String name;
     private String message;
 }

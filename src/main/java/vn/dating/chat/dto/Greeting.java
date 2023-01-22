@@ -8,7 +8,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MessageNewDto {
+public class Greeting {
     private String name;
     private String message;
 }

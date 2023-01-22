@@ -36,16 +36,22 @@
 
     // Connect button click event
     document.querySelector("#connect-button").addEventListener("click", function (event) {
+
+    var sessionId = "abc";
+
       var name = document.querySelector("#name").value;
       socket = new SockJS('http://localhost:1999/ws',
-                {debug: true});
+                {debug: true,
+                    sessionId: () => {return sessionId}
+                });
       stompClient = Stomp.over(socket);
-      stompClient.connect({}, function (frame) {
+      let headers = {
+        "header-name": "header-value"
+        };
+      stompClient.connect(headers,function (frame) {
         console.log('Get header ...............: ');
+        console.log(stompClient.headers);
         console.log('Connected: ' + frame);
-        console.log('Get header ...............: ');
-        console.log('Subprotocol: ' + socket.protocol);
-        console.log('Extensions: ' + socket.extensions);
         document.querySelector("#disconnect-button").disabled = false;
         document.querySelector("#connect-button").disabled = true;
         document.querySelector("#public-message").disabled = false;
@@ -55,19 +61,36 @@
         document.querySelector("#sendto").disabled = false;
         
 
-        stompClient.subscribe('/topic/greetings', function (greeting) {
+      
+        stompClient.subscribe('/topic/messages', function (greeting) {
           var output = document.querySelector("#output");
-          console.log("data response")
+          console.log("Public message")
           console.log(JSON.parse(greeting.body).name)
           output.innerHTML += "<p>" + JSON.parse(greeting.body).name + ": " +
             JSON.parse(greeting.body).message + " :  " + JSON.parse(greeting.body).time + "</p>";
         });
-        stompClient.subscribe('/topic/sessionId', function (sessionIdMessage) {
-        var sessionId = sessionIdMessage.body;
-        console.log("Session id: " + sessionId);
+
+        stompClient.subscribe('/user/topic/private-messages', function (message) {
+            console.log("Private message")
+            console.log(message)
         });
 
-        stompClient.send("/app/hello", {}, JSON.stringify({ 'name': name, 'message': 'test' }));
+        stompClient.subscribe('/topic/global-notifications', function (message) {
+           console.log('/topic/global-notifications')
+           console.log(message)
+           console.log("Finish")
+        });
+
+        stompClient.subscribe('/user/topic/private-notifications', function (message) {
+            console.log('/user/topic/private-notifications')
+            console.log(message)
+            console.log("Finish")
+        });
+
+       
+        
+
+        stompClient.send("/ws/message", {}, JSON.stringify({ 'name': name, 'message': 'test' }));
       });
     });
 
@@ -75,7 +98,7 @@
     document.querySelector("#send-button").addEventListener("click", function (event) {
       var message = document.querySelector("#public-message").value;
       var name = document.querySelector("#name").value;
-      stompClient.send("/app/hello", {}, JSON.stringify({ 'name': name, 'message': message }));
+      stompClient.send("/ws/message", {}, JSON.stringify({ 'name': name, 'message': message }));
 
 
       document.querySelector("#public-message").value = "";
@@ -85,9 +108,9 @@
     document.querySelector("#private-button").addEventListener("click", function (event) {
       var sendto = document.querySelector("#sendto").value;
       var message = document.querySelector("#private-message").value;
-      stompClient.send("/app/chat", {}, JSON.stringify({ 'sendto': sendto, 'message': message }));
+    //   stompClient.send("/ws/chat", {}, JSON.stringify({ 'sendto': sendto, 'message': message }));
 
-      stompClient.send("/app/message", {}, JSON.stringify({ 
+      stompClient.send("/ws/private-message", {}, JSON.stringify({ 
         'chatId': sendto,
         'senderId':"123",
         'recipientId':"123",

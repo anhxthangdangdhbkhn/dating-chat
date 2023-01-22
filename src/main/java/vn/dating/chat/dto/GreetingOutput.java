@@ -8,7 +8,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutputMessage {
+public class GreetingOutput {
     private String name;
     private String message;
     private String time;
