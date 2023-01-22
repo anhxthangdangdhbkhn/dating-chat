@@ -14,7 +14,6 @@ import java.util.UUID;
 @Slf4j
 public class UserHandSakeHandler extends DefaultHandshakeHandler {
 
-
     @Override
     protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
 
@@ -26,7 +25,7 @@ public class UserHandSakeHandler extends DefaultHandshakeHandler {
 
         log.info("User with id {}",randomId);
         return new UserPrincipal(randomId);
-
-
     }
+
+
 }
