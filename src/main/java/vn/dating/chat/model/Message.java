@@ -16,7 +16,6 @@ public class Message  extends DateAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String chatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
@@ -26,5 +25,9 @@ public class Message  extends DateAudit {
     @JoinColumn(name = "recipient_id")
     private User recipient;
 
+    private boolean senderRead;
+    private boolean recipientRead;
+    private boolean senderDelete;
+    private boolean recipientDelete;
     private String content;
 }

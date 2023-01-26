@@ -1,39 +1,67 @@
 package vn.dating.chat.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import vn.dating.chat.dto.MessageReplyDto;
+import vn.dating.chat.dto.MessagePrivateDto;
+import vn.dating.chat.model.Message;
 import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.MessageRepository;
-import vn.dating.chat.repositories.UserRepository;
+
+import java.time.Instant;
 
 
 @Service
+@Slf4j
 public class MessageService {
 
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private MessageRepository messageRepository;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    public void sendPrivateToUser( MessageReplyDto messageReplyDto) {
+    public boolean sendPrivateToUser( MessagePrivateDto newMessage) {
 
-//        User from = findById(messageReplyDto.getSenderId())
+        User from = userService.findByUserName(newMessage.getSenderId()).orElse(null);
+        User to = userService.findByUserName(newMessage.getRecipientId()).orElse(null);
 
-        messagingTemplate.convertAndSendToUser(messageReplyDto.getRecipientId(),"/topic/private-messages", messageReplyDto);
+        if(from==null){
+            log.info("From user is null");
+            return false;
+        }
+        if(to==null){
+            log.info("To user is null");
+            return false;
+        }
+
+        Message message = new Message();
+        message.setSender(from);
+        message.setRecipient(to);
+        message.setContent(newMessage.getContent());
+        message.setCreatedAt(Instant.now());
+        message.setUpdatedAt(Instant.now());
+        save(message);
+
+        messagingTemplate.convertAndSendToUser(newMessage.getRecipientId(),"/topic/private-messages", newMessage);
+        return true;
     }
 
-    public void sendPrivateMe( MessageReplyDto messageReplyDto) {
-        messagingTemplate.convertAndSendToUser(messageReplyDto.getSenderId(),"/topic/private-messages", messageReplyDto);
+    public void sendPrivateMe( MessagePrivateDto newMessage) {
+        messagingTemplate.convertAndSendToUser(newMessage.getSenderId(),"/topic/private-messages", newMessage);
     }
 
-    User findById(Long id){ return  userRepository.findById(id).orElse(null);};
-    User findByUserName(Long id){ return  userRepository.findById(id).orElse(null);};
+
+    void save(Message message){messageRepository.save(message);}
+
+
+
+
 
 
 }

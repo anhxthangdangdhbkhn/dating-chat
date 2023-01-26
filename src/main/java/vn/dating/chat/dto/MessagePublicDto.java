@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SendMessage {
+public class MessagePublicDto {
     private String name;
     private String message;
 }

@@ -1,11 +1,11 @@
 package vn.dating.chat.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.util.HtmlUtils;
 import vn.dating.chat.dto.*;
 import vn.dating.chat.service.MessageService;
 import vn.dating.chat.service.NotificationService;
@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Controller
+@Slf4j
 public  class MessageController {
 
     @Autowired
@@ -24,7 +25,6 @@ public  class MessageController {
 
     @Autowired
     private NotificationService notificationService;
-
     @Autowired
     private MessageService messageService;
 
@@ -37,43 +37,22 @@ public  class MessageController {
         return new GreetingOutput( greeting.getName()  , greeting.getMessage(),time);
     }
 
-    @MessageMapping("/message")
-    @SendTo("/topic/messages")
-    public  GreetingOutput processMessage(SendMessage message) {
+    @MessageMapping("/public-messages")
+    @SendTo("/topic/public-messages")
+    public  GreetingOutput processMessage(MessagePublicDto message) {
        System.out.println("/topic/messages");
         notificationService.sendGlobalNotification();
         String time = new SimpleDateFormat("HH:mm").format(new Date());
         return new GreetingOutput(message.getName(),message.getMessage(),time);
     }
 
-    @MessageMapping("/private-message")
-    @SendToUser("topic/private-message")
-    public ResponseMessage privateMessage(MessageReplyDto message, Principal principal) {
-//        User fromUser = userService.findById(message.getSenderId()).orElse(null);
-//        User toUser = userService.findById(message.getRecipientId()).orElse(null);
-//
-//        Message newMessage = new Message();
-//        newMessage.setSender(fromUser);
-//        newMessage.setRecipient(toUser);
-//        newMessage.setContent(message.getContent());
-//
-//        messageService.save(newMessage);
-        //        messagingTemplate.convertAndSendToUser(message.getRecipientId(),"/queue/messages",
-//                new ChatNotification("abc", message.getSendto(),message.getMessage()));
+    @MessageMapping("/private-messages")
+    @SendToUser("topic/private-messages")
+    public ResponsePrivateMessage privateMessage(MessagePrivateDto message, Principal principal) {
 
+        log.info("From {}",principal.getName());
+        boolean status =  messageService.sendPrivateToUser(message);
 
-
-
-        messageService.sendPrivateToUser(message);
-        messageService.sendPrivateMe(message);
-        return new ResponseMessage(HtmlUtils.htmlEscape(
-                "Sending private message to user " + principal.getName() + ": "
-                        + message.getContent())
-        );
-
-
-
+        return new ResponsePrivateMessage(message.getSenderId(), message.getContent(),status);
     }
-
-
 }

@@ -23,7 +23,7 @@
 <body>
 <h1>WebSocket Example</h1>
 
-<!-- <label for="name">Token:</label><input type="text" id="token" /> -->
+<label for="name">Token:</label><input type="text" id="token" />
 <button type="button" id="connect-button">Connect</button>
 <button type="button" id="disconnect-button" disabled>Disconnect</button>
 <div id="socket-id"></div>
@@ -58,12 +58,12 @@
     document.querySelector("#connect-button").addEventListener("click", function (event) {
 
       // var name = document.querySelector("#name").value;
-      // var token = document.querySelector("#token").value;
+       var token = document.querySelector("#token").value;
 
-      socket = new SockJS('http://localhost:1999/ws');
+      socket = new SockJS('http://localhost:1998/ws');
       stompClient = Stomp.over(socket);;
 
-      stompClient.connect({ }, function (frame) {
+      stompClient.connect({Authorization:"Bearer "+token }, function (frame) {
         userName = frame.headers["user-name"];
         var socketId = document.querySelector("#socket-id");
 
@@ -88,7 +88,7 @@
             JSON.parse(greeting.body).message + " :  " + JSON.parse(greeting.body).time + "</p>";
         });
 
-        stompClient.subscribe('/user/topic/private-messages', function (message) {
+        stompClient.subscribe('/user/topic/private-message', function (message) {
           console.log("Private message")
           console.log(message)
           var data = JSON.parse(message.body);
