@@ -20,8 +20,12 @@ public class BasicConfiguration  extends AbstractSecurityWebSocketMessageBrokerC
 
     @Bean
     public InMemoryUserDetailsManager userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user = User.withUsername("user2")
-                .password(passwordEncoder.encode("password"))
+        UserDetails user01 = User.withUsername("thang")
+                .password(passwordEncoder.encode("thang"))
+                .roles("USER")
+                .build();
+        UserDetails user02 = User.withUsername("dung")
+                .password(passwordEncoder.encode("dung"))
                 .roles("USER")
                 .build();
 
@@ -30,7 +34,7 @@ public class BasicConfiguration  extends AbstractSecurityWebSocketMessageBrokerC
                 .roles("USER", "ADMIN")
                 .build();
 
-        return new InMemoryUserDetailsManager(user, admin);
+        return new InMemoryUserDetailsManager(user01,user02, admin);
     }
 
     @Bean
@@ -45,7 +49,20 @@ public class BasicConfiguration  extends AbstractSecurityWebSocketMessageBrokerC
 
     @Override
     protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
-        messages.anyMessage().permitAll();
+                messages
+
+                .nullDestMatcher().permitAll()
+
+                .simpSubscribeDestMatchers("/user/queue/errors").permitAll()
+
+                .simpDestMatchers("/ws/**").permitAll()
+
+                .simpSubscribeDestMatchers("/ws/**","/user/**", "/topic/**","/queue/**").permitAll()
+
+                .simpTypeMatchers(SimpMessageType.MESSAGE, SimpMessageType.SUBSCRIBE).permitAll()
+
+                .anyMessage().permitAll();
+
 //        messages
 //
 //                .nullDestMatcher().authenticated()

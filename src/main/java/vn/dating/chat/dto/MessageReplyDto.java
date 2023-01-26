@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MessageDto extends DateAudit implements Serializable {
+public class MessageReplyDto extends DateAudit implements Serializable {
     private String chatId;
     private String senderId;
     private String recipientId;

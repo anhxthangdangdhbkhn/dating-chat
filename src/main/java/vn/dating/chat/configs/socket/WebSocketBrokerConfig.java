@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.messaging.access.intercept.ChannelSecurityInterceptor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -25,11 +26,14 @@ import java.util.List;
 public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
 
+
+
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/ws");
-        config.setUserDestinationPrefix("/user/{username}");
+//        config.setUserDestinationPrefix("/user/{username}");
 
     }
 
@@ -60,11 +64,6 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
                             if(authorization.get(0).indexOf("Bearer ")>-1) token = authorization.get(i);
                         }
 
-
-
-
-
-
                         log.info(token);
                     }
 
@@ -72,7 +71,10 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
                 return message;
             }
+
         });
+
+
 
 
     }

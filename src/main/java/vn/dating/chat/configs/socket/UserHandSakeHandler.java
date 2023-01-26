@@ -23,20 +23,20 @@ public class UserHandSakeHandler extends DefaultHandshakeHandler  {
     protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
 
 
-        HttpHeaders headers = request.getHeaders();
-        log.info("Customer header {}",attributes.size());
-       String name = request.getPrincipal().getName();
-        log.info("UserLogin {}",name);
-
-        attributes.forEach((k,d)->{
-            Object specificAttribute = attributes.get(k);
-            log.info("Specific attribute value: {}", specificAttribute);
-        });
-
-        log.info("Customer header {}",request.getHeaders().toString());
-        String randomId = UUID.randomUUID().toString();
-        log.info("User with id {}",randomId);
-        return new UserPrincipal(randomId);
+//        HttpHeaders headers = request.getHeaders();
+//        log.info("Customer header {}",attributes.size());
+//       String name = request.getPrincipal().getName();
+//        log.info("UserLogin {}",name);
+//
+//        attributes.forEach((k,d)->{
+//            Object specificAttribute = attributes.get(k);
+//            log.info("Specific attribute value: {}", specificAttribute);
+//        });
+//
+//        log.info("Customer header {}",request.getHeaders().toString());
+//        String randomId = UUID.randomUUID().toString();
+        log.info("User with id {}", request.getPrincipal().getName());
+        return new UserPrincipal( request.getPrincipal().getName());
     }
 
 

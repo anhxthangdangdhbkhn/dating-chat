@@ -3,6 +3,7 @@ package vn.dating.chat.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import vn.dating.chat.dto.MessageReplyDto;
 import vn.dating.chat.dto.ResponseMessage;
 
 @Service
@@ -18,9 +19,7 @@ public class NotificationService {
         messagingTemplate.convertAndSend("/topic/global-notifications", message);
     }
 
-    public void sendPrivateNotification( String userId) {
-        ResponseMessage message = new ResponseMessage("Private Notification");
-
-        messagingTemplate.convertAndSendToUser(userId,"/topic/private-notifications", message);
+    public void sendPrivateNotification( MessageReplyDto messageReplyDto) {
+        messagingTemplate.convertAndSendToUser(messageReplyDto.getRecipientId(),"/topic/private-notifications", messageReplyDto);
     }
 }
