@@ -1,4 +1,4 @@
-package vn.dating.chat.configs.socket;
+package vn.dating.chat.securities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,4 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
     }
-
-
 }

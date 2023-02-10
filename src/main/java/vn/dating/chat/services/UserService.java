@@ -1,0 +1,124 @@
+package vn.dating.chat.services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import vn.dating.chat.exceptions.AppException;
+import vn.dating.chat.exceptions.ResourceNotFoundException;
+import vn.dating.chat.model.Role;
+import vn.dating.chat.model.RoleName;
+import vn.dating.chat.model.User;
+import vn.dating.chat.repositories.RoleRepository;
+import vn.dating.chat.repositories.UserRepository;
+import vn.dating.chat.utils.NotificationEmail;
+
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private  UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private  MailService mailService;
+
+
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElseThrow(()-> {
+            throw new ResourceNotFoundException("user","id",id);});
+    }
+
+    public User findById(Long id) {
+        return  userRepository.findById(id).orElse(null);
+    }
+
+    public boolean existsUserById(Long id){
+        List user = userRepository.findUserById(id);
+        if(user.size()==1) return true;
+        else  return  false;
+    }
+
+    public User save(User user){return  userRepository.save(user);};
+
+    public Optional<User> findByEmail(String email){return userRepository.findByEmail(email);}
+    public boolean existsByEmail(String email) {return  userRepository.existsByEmail(email);}
+    public User saveAndFlush(User user){return  userRepository.saveAndFlush(user);}
+
+    public void removeRoleUser(long userId,long roleId){roleRepository.removeRoleUser( userId, roleId);}
+
+
+
+    public Optional<User> findByCreateToken(String token){return userRepository.findByCreateToken(token);}
+
+    public Optional<User>findByEmailAndPassword(String email,String password){return userRepository.findByEmailAndPassword(email,password);};
+
+    public User updateUser(User user) {
+        return userRepository.save(user);
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    public User createUserSendEmailActiveAccount(User user){
+
+        String verificationToken  = UUID.randomUUID().toString();
+
+        String passNew = passwordEncoder.encode(user.getPassword());
+
+        user.setPassword(passNew);
+        user.setCreateToken(verificationToken);
+        user.setCreateExpiry(Instant.now().plusMillis(10 *60 *1000));
+
+        Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
+                .orElseThrow(() -> new AppException("User Role not set."));
+
+        user.setRoles(Collections.singleton(userRole));
+
+        mailService.sendMail(new NotificationEmail(
+                "Please Activate your Account",
+                user.getEmail(),
+                "Thank you for signing up to heyShop, " +
+                        "please click on the below url to activate your account : " +
+                        "http://localhost:1999/api/v1/auth/verify/" + verificationToken));
+
+        user = userRepository.save(user);
+        return user;
+    }
+
+    public boolean userVerify(User user){
+        if(user.getCreateExpiry().isBefore(Instant.now())){
+            return false;
+        }
+        user.setCreateToken("");
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        return true;
+    }
+
+}
+

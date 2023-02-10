@@ -1,4 +1,4 @@
-package vn.dating.chat.dto;
+package vn.dating.chat.dto.messages;
 
 import lombok.*;
 

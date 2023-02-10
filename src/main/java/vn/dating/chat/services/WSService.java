@@ -1,9 +1,9 @@
-package vn.dating.chat.service;
+package vn.dating.chat.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import vn.dating.chat.dto.MessagePrivateDto;
+import vn.dating.chat.dto.messages.MessagePrivateDto;
 
 
 @Service

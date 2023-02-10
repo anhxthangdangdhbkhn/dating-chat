@@ -1,4 +1,4 @@
-package vn.dating.chat.dto;
+package vn.dating.chat.dto.messages;
 
 public class ResponsePrivateMessage {
     private boolean status;

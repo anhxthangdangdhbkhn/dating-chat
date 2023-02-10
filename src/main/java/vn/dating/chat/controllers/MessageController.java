@@ -6,10 +6,10 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
-import vn.dating.chat.dto.*;
-import vn.dating.chat.service.MessageService;
-import vn.dating.chat.service.NotificationService;
-import vn.dating.chat.service.UserService;
+import vn.dating.chat.dto.messages.*;
+import vn.dating.chat.services.MessageService;
+import vn.dating.chat.services.NotificationService;
+import vn.dating.chat.services.UserService;
 
 
 import java.security.Principal;
