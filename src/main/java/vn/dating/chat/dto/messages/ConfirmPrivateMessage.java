@@ -1,20 +1,29 @@
 package vn.dating.chat.dto.messages;
 
-public class ResponsePrivateMessage {
+public class ConfirmPrivateMessage {
     private boolean status;
     private String content;
     private String senderId;
+    private String time;
 
-    public ResponsePrivateMessage() {
+    public ConfirmPrivateMessage() {
     }
 
-    public ResponsePrivateMessage(String senderId, String content, boolean status) {
+    public ConfirmPrivateMessage(String senderId, String content, String time, boolean status) {
         this.status = status;
         this.content = content;
         this.senderId = senderId;
+        this.time = time;
     }
 
-    public ResponsePrivateMessage(String content) {
+    public ConfirmPrivateMessage(MessagePrivateDto messagePrivateDto) {
+        this.status = true;
+        this.content = messagePrivateDto.getContent();
+        this.senderId = messagePrivateDto.getSenderId();
+        this.time = messagePrivateDto.getTime();
+    }
+
+    public ConfirmPrivateMessage(String content) {
         this.content = content;
     }
 

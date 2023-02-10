@@ -14,6 +14,7 @@ import vn.dating.chat.services.UserService;
 
 import java.security.Principal;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 
 @Controller
@@ -48,11 +49,17 @@ public  class MessageController {
 
     @MessageMapping("/private-messages")
     @SendToUser("topic/private-messages")
-    public ResponsePrivateMessage privateMessage(MessagePrivateDto message, Principal principal) {
+    public ConfirmPrivateMessage privateMessage(MessagePrivateDto message, Principal principal) {
 
         log.info("From {}",principal.getName());
-        boolean status =  messageService.sendPrivateToUser(message);
+        log.info("to {}",message.getRecipientId());
 
-        return new ResponsePrivateMessage(message.getSenderId(), message.getContent(),status);
+        message.setSenderId(principal.getName());
+        message.setCreatedAt(Instant.now());
+        message.setUpdatedAt(Instant.now());
+
+        messageService.sendPrivateToUser(message);
+
+        return new ConfirmPrivateMessage(message);
     }
 }

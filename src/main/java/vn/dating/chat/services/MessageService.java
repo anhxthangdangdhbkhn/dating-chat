@@ -18,11 +18,8 @@ public class MessageService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    public boolean sendPrivateToUser( MessagePrivateDto newMessage) {
-
-
+    public void sendPrivateToUser( MessagePrivateDto newMessage) {
         messagingTemplate.convertAndSendToUser(newMessage.getRecipientId(),"/topic/private-messages", newMessage);
-        return true;
     }
 
     public void sendPrivateMe( MessagePrivateDto newMessage) {

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import vn.dating.chat.dto.messages.MessagePrivateDto;
-import vn.dating.chat.dto.messages.ResponsePrivateMessage;
+import vn.dating.chat.dto.messages.ConfirmPrivateMessage;
 
 @Service
 public class NotificationService {
@@ -14,7 +14,7 @@ public class NotificationService {
 
 
     public void sendGlobalNotification() {
-        ResponsePrivateMessage message = new ResponsePrivateMessage("Global Notification");
+        ConfirmPrivateMessage message = new ConfirmPrivateMessage("Global Notification");
 
         messagingTemplate.convertAndSend("/topic/global-notifications", message);
     }

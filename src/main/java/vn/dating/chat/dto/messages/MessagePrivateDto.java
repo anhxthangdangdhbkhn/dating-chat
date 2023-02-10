@@ -16,4 +16,5 @@ public class MessagePrivateDto extends DateAudit implements Serializable {
     private String senderId;
     private String recipientId;
     private String content;
+    private String time;
 }
