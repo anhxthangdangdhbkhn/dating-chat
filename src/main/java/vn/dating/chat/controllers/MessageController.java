@@ -2,11 +2,17 @@ package vn.dating.chat.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import vn.dating.chat.dto.messages.*;
+import vn.dating.chat.mapper.UserMapper;
+import vn.dating.chat.model.User;
 import vn.dating.chat.services.MessageService;
 import vn.dating.chat.services.NotificationService;
 import vn.dating.chat.services.UserService;
@@ -16,6 +22,7 @@ import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 @Controller
 @Slf4j
@@ -62,4 +69,6 @@ public  class MessageController {
 
         return new ConfirmPrivateMessage(message);
     }
+
+
 }

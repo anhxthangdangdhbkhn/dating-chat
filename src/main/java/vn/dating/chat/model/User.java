@@ -39,6 +39,8 @@ public class User extends DateAudit {
     @Size(max = 100)
     private String password;
 
+    private String avatar;
+
 
     private boolean isAccountNonExpired;
     private boolean isAccountNonLocked;

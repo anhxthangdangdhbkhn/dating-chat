@@ -1,16 +1,21 @@
 package vn.dating.chat.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.dating.chat.exceptions.AppException;
 import vn.dating.chat.exceptions.ResourceNotFoundException;
+import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.Role;
 import vn.dating.chat.model.RoleName;
 import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.RoleRepository;
 import vn.dating.chat.repositories.UserRepository;
 import vn.dating.chat.utils.NotificationEmail;
+import vn.dating.chat.utils.PagedResponse;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -47,6 +52,7 @@ public class UserService {
         return  userRepository.findById(id).orElse(null);
     }
 
+
     public boolean existsUserById(Long id){
         List user = userRepository.findUserById(id);
         if(user.size()==1) return true;
@@ -81,6 +87,19 @@ public class UserService {
 
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email).orElse(null);
+    }
+
+    public PagedResponse getAllUser(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> users = userRepository.findAll(pageable);
+
+        if(users.getNumberOfElements()==0){
+            return new PagedResponse<>(Collections.emptyList(), users.getNumber(), users.getSize(),
+                    users.getTotalElements(), users.getTotalPages(), users.isLast());
+        }
+
+        return new PagedResponse<>(UserMapper.toGetListUsers(users.stream().toList()), users.getNumber(), users.getSize(), users.getTotalElements(),
+                users.getTotalPages(), users.isLast());
     }
 
     public User createUserSendEmailActiveAccount(User user){

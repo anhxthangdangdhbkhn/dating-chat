@@ -71,7 +71,7 @@ public class AuthController {
         String token = tokenProvider.generateToken(authentication);
         String refreshToken = tokenProvider.generateRefreshToken(authentication);
 
-        return ResponseEntity.ok(new JwtAuthenticationResponse(token,refreshToken, userProfile.userProfileConvert(userGet)));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(token,refreshToken, userGet.getAvatar(),userProfile.userProfileConvert(userGet)));
     }
 
     @PostMapping(value = "/refreshToken")
@@ -96,7 +96,7 @@ public class AuthController {
         String token = tokenProvider.generateToken(authentication);
         String refreshToken = tokenProvider.generateRefreshToken(authentication);
 
-        return ResponseEntity.ok(new JwtAuthenticationResponse(token,refreshToken, userProfile.userProfileConvert(userGet)));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(token,refreshToken,user.getAvatar(), userProfile.userProfileConvert(userGet)));
     }
 
     @PostMapping(value = "/register")

@@ -26,20 +26,13 @@ import java.util.List;
 @EnableWebSocketMessageBroker
 @Slf4j
 public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
-
-
     @Autowired
     private JwtTokenProvider tokenProvider;
-
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-
     @Autowired
     private AuthenticationManager authenticationManager;
-
-
-
 
 
     @Override
@@ -87,9 +80,6 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
                                 Principal principal = new Principal() {
                                     @Override
                                     public String getName() {
-
-
-
                                         return userDetails.getUsername();
                                     }
                                 };

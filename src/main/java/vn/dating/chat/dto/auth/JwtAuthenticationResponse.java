@@ -5,17 +5,18 @@ public class JwtAuthenticationResponse {
     private String refreshToken;
     private Long userId;
     private String email;
+    private String avatar;
 
     private String tokenType = "Bearer";
 
 //    private UserProfile user;
 
-    public JwtAuthenticationResponse(String accessToken, String refreshToken, UserProfile user) {
+    public JwtAuthenticationResponse(String accessToken, String refreshToken,String avatar, UserProfile user) {
         this.email = user.getEmail();
         this.userId = user.getId();
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
-//        this.user = user;
+        this.avatar = avatar;
     }
 
     public String getAccessToken() {
@@ -26,12 +27,12 @@ public class JwtAuthenticationResponse {
         this.accessToken = accessToken;
     }
 
-    public String getTokenType() {
-        return tokenType;
+    public String getRefreshToken() {
+        return refreshToken;
     }
 
-    public void setTokenType(String tokenType) {
-        this.tokenType = tokenType;
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public Long getUserId() {
@@ -50,19 +51,19 @@ public class JwtAuthenticationResponse {
         this.email = email;
     }
 
-    //    public UserProfile getUser() {
-//        return user;
-//    }
-//
-//    public void setUser(UserProfile user) {
-//        this.user = user;
-//    }
-
-    public String getRefreshToken() {
-        return refreshToken;
+    public String getAvatar() {
+        return avatar;
     }
 
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
     }
 }
