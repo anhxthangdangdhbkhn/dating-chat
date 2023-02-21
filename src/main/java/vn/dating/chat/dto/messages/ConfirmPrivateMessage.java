@@ -6,6 +6,7 @@ public class ConfirmPrivateMessage {
     private String senderId;
     private String time;
     private String recipientId;
+    private String conversationId;
 
     public ConfirmPrivateMessage(String msg) {
     }

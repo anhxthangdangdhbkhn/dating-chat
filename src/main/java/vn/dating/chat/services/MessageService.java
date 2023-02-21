@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import vn.dating.chat.dto.messages.MessagePrivateDto;
+import vn.dating.chat.model.User;
+
+import java.util.List;
 
 
 @Service
@@ -17,6 +20,8 @@ public class MessageService {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+
 
     public void sendPrivateToUser( MessagePrivateDto newMessage) {
         messagingTemplate.convertAndSendToUser(newMessage.getRecipientId(),"/topic/private-messages", newMessage);

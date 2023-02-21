@@ -43,6 +43,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public List<User> findUsersByEmails(List<String> emails) {
+        List<User> users = userRepository.findByEmails(emails);
+        return users;
+    }
+
     public User getUserById(Long id) {
         return userRepository.findById(id).orElseThrow(()-> {
             throw new ResourceNotFoundException("user","id",id);});

@@ -77,13 +77,15 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 //                                        userDetails, null, userDetails.getAuthorities());
 //                                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                                String gmail =  userDetails.getUsername();
                                 Principal principal = new Principal() {
                                     @Override
                                     public String getName() {
-                                        return userDetails.getUsername();
+                                        return gmail;
                                     }
                                 };
                                 accessor.setUser(principal);
+//                                accessor.setSessionId(gmail);
                             }
                         }
 

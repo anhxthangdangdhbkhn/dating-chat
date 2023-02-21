@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.repository.query.Param;
 import vn.dating.chat.model.User;
 
 import java.util.List;
@@ -18,6 +19,9 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Page<User> findAll(Pageable pageable);
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String name);
+
+    @Query("SELECT u FROM User u WHERE u.email IN :emails")
+    List<User> findByEmails(@Param("emails") List<String> emails);
 
 
     @Modifying
