@@ -2,6 +2,9 @@ package vn.dating.chat.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -9,10 +12,9 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import vn.dating.chat.dto.messages.*;
-import vn.dating.chat.services.ChatRoomService;
-import vn.dating.chat.services.MessageService;
-import vn.dating.chat.services.NotificationService;
-import vn.dating.chat.services.UserService;
+import vn.dating.chat.model.Group;
+import vn.dating.chat.model.User;
+import vn.dating.chat.services.*;
 
 
 import java.security.Principal;
@@ -34,6 +36,9 @@ public  class SocketController {
     private NotificationService notificationService;
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private GroupService groupService;
 
 
     @MessageMapping("/hello")
@@ -73,35 +78,26 @@ public  class SocketController {
         return new ConfirmPrivateMessage(message);
     }
 
-    @MessageMapping("/chat/join")
-    @SendTo("/topic/group")
-    public ChatMessage joinChatRoom(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
-        log.info("join a room {}",headerAccessor.getUser());
-        String chatRoomId = chatMessage.getChatRoomId();
-        headerAccessor.getSessionAttributes().put("chatRoomId", chatRoomId);
-        chatRoomService.addUserToChatRoom(chatRoomId, headerAccessor.getSessionId());
-        chatMessage.setContent(chatMessage.getSender() + " has joined the chat room.");
-        return chatMessage;
+    @MessageMapping("/group/{groupId}/sendMessage")
+    public void sendMessageToGroup(@DestinationVariable("groupId") Long groupId, MessageDto messageDto, Principal principal) {
+
+        User user = userService.getUserByEmail(principal.getName());
+        Group group = groupService.getGroupById(groupId);
+        String content = messageDto.getContent();
+
+        messageService.sendMessageToGroup(groupId,messageDto);
     }
 
-    @MessageMapping("/chat/send")
-    @SendTo("/topic/group")
-    public ChatMessage sendChatMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
-        String chatRoomId = (String) headerAccessor.getSessionAttributes().get("chatRoomId");
-        chatMessage.setChatRoomId(chatRoomId);
-        return chatMessage;
-    }
-
-    @MessageMapping("/chat/leave")
-    public void leaveChatRoom(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
-        String chatRoomId = chatMessage.getChatRoomId();
-        String sessionId = headerAccessor.getSessionId();
-
-        chatRoomService.removeUserFromChatRoom(chatRoomId, sessionId);
-
-        chatMessage.setContent(chatMessage.getSender() + " has left the chat room.");
-//        messagingTemplate.convertAndSend("/topic/group/" + chatRoomId, chatMessage);
-    }
+//    @MessageMapping("/chat/leave")
+//    public void leaveChatRoom(@Payload ChatMessageDto chatMessageDto, SimpMessageHeaderAccessor headerAccessor) {
+//        String chatRoomId = chatMessageDto.getChatRoomId();
+//        String sessionId = headerAccessor.getSessionId();
+//
+//        chatRoomService.removeUserFromChatRoom(chatRoomId, sessionId);
+//
+//        chatMessageDto.setContent(chatMessageDto.getSender() + " has left the chat room.");
+////        messagingTemplate.convertAndSend("/topic/group/" + chatRoomId, chatMessage);
+//    }
 
 
 }

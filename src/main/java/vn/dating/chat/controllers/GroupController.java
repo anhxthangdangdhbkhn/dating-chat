@@ -37,18 +37,30 @@ public class GroupController {
     public ResponseEntity createGroup(@RequestBody CreateGroupDto createGroupDto, Principal principal) {
 
 
-        User admin = userService.findByEmail(principal.getName()).orElse(null);
+        String adminEmail = principal.getName();
+        User admin = userService.findByEmail(adminEmail).orElse(null);
+
+
+
+        if(admin ==null){
+            return ResponseEntity.badRequest().build();
+        }
 
         Group group = new Group();
-
         group.setName(createGroupDto.getName());
         group.setAdmin(admin);
         group.setName(createGroupDto.getName());
 
-        List<String> member = createGroupDto.getMember();
-        member.add(admin.getEmail());
+        List<String> members = createGroupDto.getMember();
+        if(members.contains(adminEmail)){
+            members.remove(adminEmail);
+        }
+        if(members.size()<2){
+            return ResponseEntity.badRequest().build();
+        }
+        members.add(adminEmail);
 
-        List<User> userList = userService.findUsersByEmails(member);
+        List<User> userList = userService.findUsersByEmails(members);
 
         group = groupService.saveGroup(group);
 
@@ -56,14 +68,12 @@ public class GroupController {
 
         ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
 
-//        List<User> groupUser = new ArrayList<>();
-//        groupMembers.forEach(m->{
-//            groupUser.add(m.getUser());
-//        });
+        List<User> groupUser = new ArrayList<>();
+        groupMembers.forEach(m->{
+            groupUser.add(m.getUser());
+        });
 
-
-        resultGroupDto.setMembers(UserMapper.toGetListUsers(userList));
-
+        resultGroupDto.setMembers(UserMapper.toGetListUsers(groupUser));
         return ResponseEntity.ok(resultGroupDto);
     }
 

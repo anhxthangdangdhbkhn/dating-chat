@@ -50,8 +50,12 @@ public class GroupService {
             groupMember.setGroup(group);
             groupMember.setUser(member);
             groupMembers.add(groupMember);
+
+            groupMember = groupMemberRepository.save(groupMember);
+            groupMembers.add(groupMember);
         }
-        return groupMemberRepository.saveAll(groupMembers);
+        return groupMembers;
+//        return groupMemberRepository.saveAll(groupMembers);
     }
 
     public Map<Group, List<User>> getGroupsForUser(long userId){

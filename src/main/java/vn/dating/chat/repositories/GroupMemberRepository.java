@@ -14,6 +14,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     // Custom query to find group members by user ID
     List<GroupMember> findByUserId(Long userId);
+    GroupMember save(GroupMember groupMember);
 //    List<GroupMember> saveAll(List<GroupMember> groupMembers);
 }
 
