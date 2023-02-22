@@ -1,6 +1,9 @@
 package vn.dating.chat.services;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.dating.chat.model.Group;
 import vn.dating.chat.model.GroupMember;
 import vn.dating.chat.model.User;
@@ -13,15 +16,16 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
+@Transactional
 public class GroupService {
 
-    private final GroupRepository groupRepository;
-    private final GroupMemberRepository groupMemberRepository;
+    @Autowired
+    private  GroupRepository groupRepository;
 
-    public GroupService(GroupRepository groupRepository,GroupMemberRepository groupMemberRepository) {
-        this.groupRepository = groupRepository;
-        this.groupMemberRepository = groupMemberRepository;
-    }
+    @Autowired
+    private  GroupMemberRepository groupMemberRepository;
+
 
     public Group getGroupById(Long id) {
         return groupRepository.findById(id).orElse(null);
@@ -74,6 +78,19 @@ public class GroupService {
 
         return groupsAndMembers;
 
+    }
+
+    public List<String> getAllUserOfGroup(long groupId){
+
+        log.info("groupId:" +groupId );
+        List<GroupMember> groupMemberList = groupMemberRepository.findByUserId(groupId);
+        log.info("Member group size: ",groupMemberList.size());
+        List<String> listUsers = new ArrayList<>();
+//        groupMemberList.forEach(m->{
+//            listUsers.add(m.getUser().getEmail());
+//        });
+
+        return  listUsers;
     }
 
 }

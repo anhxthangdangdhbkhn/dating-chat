@@ -1,4 +1,4 @@
-package vn.dating.chat.dto.messages;
+package vn.dating.chat.dto.messages.api;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ResultGroupMemberDto {
+public class ContactDto {
     private String email;
     private String username;
     private Long id;

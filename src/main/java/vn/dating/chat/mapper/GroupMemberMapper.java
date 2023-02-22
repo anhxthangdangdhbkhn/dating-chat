@@ -1,7 +1,7 @@
 package vn.dating.chat.mapper;
 
 import org.modelmapper.ModelMapper;
-import vn.dating.chat.dto.messages.ResultGroupMemberDto;
+import vn.dating.chat.dto.messages.api.ResultGroupMemberDto;
 import vn.dating.chat.model.GroupMember;
 
 import java.util.ArrayList;

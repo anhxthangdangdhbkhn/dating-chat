@@ -1,4 +1,4 @@
-package vn.dating.chat.dto.messages;
+package vn.dating.chat.dto.messages.socket;
 
 import lombok.*;
 
@@ -8,7 +8,8 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Greeting {
+public class GreetingOutput {
     private String name;
     private String message;
+    private String time;
 }

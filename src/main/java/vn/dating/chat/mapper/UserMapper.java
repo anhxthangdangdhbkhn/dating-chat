@@ -2,7 +2,7 @@ package vn.dating.chat.mapper;
 
 import org.modelmapper.ModelMapper;
 import vn.dating.chat.dto.auth.UserDto;
-import vn.dating.chat.dto.messages.ContactDto;
+import vn.dating.chat.dto.messages.api.ContactDto;
 import vn.dating.chat.model.User;
 
 import java.util.ArrayList;

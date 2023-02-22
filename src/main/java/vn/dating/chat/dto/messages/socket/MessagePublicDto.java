@@ -1,4 +1,4 @@
-package vn.dating.chat.dto.messages;
+package vn.dating.chat.dto.messages.socket;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

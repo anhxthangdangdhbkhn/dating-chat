@@ -1,4 +1,6 @@
-package vn.dating.chat.dto.messages;
+package vn.dating.chat.dto.messages.socket;
+
+import vn.dating.chat.dto.messages.socket.MessagePrivateDto;
 
 public class ConfirmPrivateMessage {
     private boolean status;

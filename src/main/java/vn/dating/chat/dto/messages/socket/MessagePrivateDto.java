@@ -1,4 +1,4 @@
-package vn.dating.chat.dto.messages;
+package vn.dating.chat.dto.messages.socket;
 
 import lombok.*;
 import vn.dating.chat.model.audit.DateAudit;

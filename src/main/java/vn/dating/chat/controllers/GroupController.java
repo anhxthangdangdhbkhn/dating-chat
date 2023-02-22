@@ -2,10 +2,9 @@ package vn.dating.chat.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.dating.chat.dto.messages.CreateGroupDto;
-import vn.dating.chat.dto.messages.ResultGroupDto;
+import vn.dating.chat.dto.messages.api.CreateGroupDto;
+import vn.dating.chat.dto.messages.api.ResultGroupDto;
 import vn.dating.chat.mapper.GroupMapper;
-import vn.dating.chat.mapper.GroupMemberMapper;
 import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.Group;
 import vn.dating.chat.model.GroupMember;

@@ -2,8 +2,6 @@ package vn.dating.chat.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -11,7 +9,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
-import vn.dating.chat.dto.messages.*;
+import vn.dating.chat.dto.messages.socket.*;
 import vn.dating.chat.model.Group;
 import vn.dating.chat.model.User;
 import vn.dating.chat.services.*;
@@ -21,6 +19,7 @@ import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Controller
 @Slf4j
@@ -39,6 +38,9 @@ public  class SocketController {
 
     @Autowired
     private GroupService groupService;
+
+    @Autowired
+    private GroupMemberService groupMemberService;
 
 
     @MessageMapping("/hello")
@@ -60,33 +62,50 @@ public  class SocketController {
 
     @MessageMapping("/private-messages")
     @SendToUser("topic/private-messages")
-    public ConfirmPrivateMessage privateMessage(MessagePrivateDto message, Principal principal,SimpMessageHeaderAccessor headerAccessor) {
+    public ConfirmPrivateMessage privateMessage(MessagePrivateDto message, Principal principal, SimpMessageHeaderAccessor headerAccessor) {
 
         log.info("From {}",principal.getName());
         log.info("to {}",message.getRecipientId());
-
         message.setSenderId(principal.getName());
         message.setCreatedAt(Instant.now());
         message.setUpdatedAt(Instant.now());
-
-        String sessionId = headerAccessor.getSessionId();
-        log.info("sessionId: ");
-        log.info(sessionId);
-
         messageService.sendPrivateToUser(message);
 
         return new ConfirmPrivateMessage(message);
     }
 
-    @MessageMapping("/group/{groupId}/sendMessage")
-    public void sendMessageToGroup(@DestinationVariable("groupId") Long groupId, MessageDto messageDto, Principal principal) {
+    @MessageMapping("/group-private-messages")
+    @SendToUser("topic/group-private-messages")
+    public MessagePrivateGroupOutputDto sendMessageToGroup(MessagePrivateGroupDto messagePrivateGroupDto, Principal principal) {
 
-        User user = userService.getUserByEmail(principal.getName());
-        Group group = groupService.getGroupById(groupId);
-        String content = messageDto.getContent();
 
-        messageService.sendMessageToGroup(groupId,messageDto);
+        log.info("group-private-messages");
+        log.info(messagePrivateGroupDto.toString());
+
+//        User user = userService.getUserByEmail(principal.getName());
+//        Group group = groupService.getGroupById(messagePrivateGroupDto.getGroupId());
+
+//        List<String> userList = groupService.getAllUserOfGroup(messagePrivateGroupDto.getGroupId());
+
+        String username = principal.getName();
+        String content = messagePrivateGroupDto.getContent();
+        MessagePrivateGroupOutputDto messageOutputDto = new MessagePrivateGroupOutputDto();
+
+        messageOutputDto.setContent(content);
+        messageOutputDto.setGroupId(messagePrivateGroupDto.getGroupId());
+        messageOutputDto.setSenderId(username);
+        messageOutputDto.setTime(messagePrivateGroupDto.getTime());
+
+//        if(userList.contains(username)){
+//            userList.remove(username);
+//        }
+
+        messageService.sendMessageToGroup(messageOutputDto);
+
+        return messageOutputDto;
     }
+
+
 
 //    @MessageMapping("/chat/leave")
 //    public void leaveChatRoom(@Payload ChatMessageDto chatMessageDto, SimpMessageHeaderAccessor headerAccessor) {

@@ -1,4 +1,4 @@
-package vn.dating.chat.dto.messages;
+package vn.dating.chat.dto.messages.socket;
 
 import lombok.*;
 
@@ -8,8 +8,8 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MessagePrivateRoomDto {
-    private MessageType type;
+public class MessagePrivateGroupDto {
     private String content;
+    private Long groupId;
     private String time;
 }
