@@ -1,6 +1,8 @@
 package vn.dating.chat.model;
 
 import lombok.*;
+import org.hibernate.annotations.NaturalId;
+import vn.dating.chat.model.audit.DateAudit;
 
 import javax.persistence.*;
 
@@ -10,7 +12,7 @@ import javax.persistence.*;
 @ToString
 @Data
 @NoArgsConstructor
-public class Group {
+public class Group extends DateAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
@@ -22,5 +24,11 @@ public class Group {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
+
+    @Enumerated(EnumType.STRING)
+    @NaturalId
+    private GroupType type;
+
+    private String url;
 }
 

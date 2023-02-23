@@ -11,6 +11,7 @@ import vn.dating.chat.model.GroupMember;
 import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.GroupMemberRepository;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,12 +57,12 @@ public class MessageService {
         return  listUsers;
     }
 
-    public void sendMessageToGroup(MessagePrivateGroupOutputDto messagePrivateGroupOutputDto) {
-
-        long id=1;
-
+    public void sendMessageToGroup(MessagePrivateGroupOutputDto messagePrivateGroupOutputDto, Principal principal) {
 
         List<String> listUsers = getAllUserOfGroup(messagePrivateGroupOutputDto.getGroupId());
+        if(listUsers.contains(principal.getName())){
+            listUsers.remove(principal.getName());
+        }
 
         for(int i=0;i<listUsers.size();i++){
             log.info("sent to user " +listUsers.get(i));

@@ -100,7 +100,7 @@ public  class SocketController {
 //            userList.remove(username);
 //        }
 
-        messageService.sendMessageToGroup(messageOutputDto);
+        messageService.sendMessageToGroup(messageOutputDto,principal);
 
         return messageOutputDto;
     }

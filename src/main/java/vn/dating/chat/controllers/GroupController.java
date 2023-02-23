@@ -35,11 +35,8 @@ public class GroupController {
     @PostMapping
     public ResponseEntity createGroup(@RequestBody CreateGroupDto createGroupDto, Principal principal) {
 
-
         String adminEmail = principal.getName();
         User admin = userService.findByEmail(adminEmail).orElse(null);
-
-
 
         if(admin ==null){
             return ResponseEntity.badRequest().build();
@@ -54,11 +51,15 @@ public class GroupController {
         if(members.contains(adminEmail)){
             members.remove(adminEmail);
         }
-        if(members.size()<2){
+        if(members.size()<1){
             return ResponseEntity.badRequest().build();
         }
-        members.add(adminEmail);
+        if(members.size()==1){
+            // create user-user
+            // check chat is exist
 
+        }
+        members.add(adminEmail);
         List<User> userList = userService.findUsersByEmails(members);
 
         group = groupService.saveGroup(group);

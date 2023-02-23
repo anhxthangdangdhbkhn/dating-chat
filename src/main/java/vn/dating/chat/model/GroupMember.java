@@ -1,6 +1,7 @@
 package vn.dating.chat.model;
 
 import lombok.*;
+import vn.dating.chat.model.audit.DateAudit;
 
 import javax.persistence.*;
 
@@ -10,7 +11,7 @@ import javax.persistence.*;
 @ToString
 @Data
 @NoArgsConstructor
-public class GroupMember {
+public class GroupMember extends DateAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
