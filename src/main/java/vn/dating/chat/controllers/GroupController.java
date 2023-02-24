@@ -1,5 +1,6 @@
 package vn.dating.chat.controllers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.dating.chat.dto.messages.api.CreateGroupDto;
@@ -8,12 +9,14 @@ import vn.dating.chat.mapper.GroupMapper;
 import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.Group;
 import vn.dating.chat.model.GroupMember;
+import vn.dating.chat.model.GroupType;
 import vn.dating.chat.model.User;
 import vn.dating.chat.services.GroupMemberService;
 import vn.dating.chat.services.GroupService;
 import vn.dating.chat.services.UserService;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,15 +25,17 @@ import java.util.Map;
 @RequestMapping("/api/v1/groups")
 public class GroupController {
 
-    private final GroupService groupService;
-    private final GroupMemberService groupMemberService;
-    private final UserService userService;
 
-    public GroupController(GroupService groupService, GroupMemberService groupMemberService,UserService userService) {
-        this.groupService = groupService;
-        this.groupMemberService = groupMemberService;
-        this.userService = userService;
-    }
+    @Autowired
+    private  GroupService groupService;
+
+    @Autowired
+    private GroupMemberService groupMemberService;
+
+    @Autowired
+    private  UserService userService;
+
+
 
     @PostMapping
     public ResponseEntity createGroup(@RequestBody CreateGroupDto createGroupDto, Principal principal) {
@@ -42,23 +47,28 @@ public class GroupController {
             return ResponseEntity.badRequest().build();
         }
 
+        if(createGroupDto.getType() == GroupType.PRIVATE && createGroupDto.getMember().size()==1){
+            // find exist private group
+
+
+        }
+
         Group group = new Group();
         group.setName(createGroupDto.getName());
         group.setAdmin(admin);
         group.setName(createGroupDto.getName());
+        group.setCreatedAt(Instant.now());
+        group.setType(createGroupDto.getType());
 
         List<String> members = createGroupDto.getMember();
         if(members.contains(adminEmail)){
             members.remove(adminEmail);
         }
+
         if(members.size()<1){
             return ResponseEntity.badRequest().build();
         }
-        if(members.size()==1){
-            // create user-user
-            // check chat is exist
 
-        }
         members.add(adminEmail);
         List<User> userList = userService.findUsersByEmails(members);
 

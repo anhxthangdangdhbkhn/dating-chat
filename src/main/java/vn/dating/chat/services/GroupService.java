@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.dating.chat.model.Group;
 import vn.dating.chat.model.GroupMember;
+import vn.dating.chat.model.GroupMemberType;
 import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.GroupMemberRepository;
 import vn.dating.chat.repositories.GroupRepository;
@@ -53,6 +54,7 @@ public class GroupService {
             GroupMember groupMember = new GroupMember();
             groupMember.setGroup(group);
             groupMember.setUser(member);
+            groupMember.setType(GroupMemberType.PRIVATE);
             groupMembers.add(groupMember);
 
             groupMember = groupMemberRepository.save(groupMember);

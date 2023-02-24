@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import vn.dating.chat.dto.auth.UserDto;
+import vn.dating.chat.model.GroupType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,5 +20,6 @@ public class ResultGroupDto {
     private String name;
     private String time;
     private String adminEmail;
+    private GroupType type;
     private List<UserDto> members = new ArrayList<>();
 }

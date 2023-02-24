@@ -14,7 +14,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class Group extends DateAudit {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -26,7 +26,6 @@ public class Group extends DateAudit {
     private User admin;
 
     @Enumerated(EnumType.STRING)
-    @NaturalId
     private GroupType type;
 
     private String url;

@@ -1,6 +1,7 @@
 package vn.dating.chat.model;
 
 import lombok.*;
+import org.hibernate.annotations.NaturalId;
 import vn.dating.chat.model.audit.DateAudit;
 
 import javax.persistence.*;
@@ -25,4 +26,6 @@ public class GroupMember extends DateAudit {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    private GroupMemberType type;
 }
