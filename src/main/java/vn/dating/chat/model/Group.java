@@ -5,6 +5,7 @@ import org.hibernate.annotations.NaturalId;
 import vn.dating.chat.model.audit.DateAudit;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -28,6 +29,15 @@ public class Group extends DateAudit {
     @Enumerated(EnumType.STRING)
     private GroupType type;
 
+    @Enumerated(EnumType.STRING)
+    private GroupRandomType random;
+
     private String url;
+
+    public void generateUrl(){
+        String inputString = "group";
+        UUID uuid = UUID.nameUUIDFromBytes(inputString.getBytes());
+        this.url = uuid.toString();
+    }
 }
 

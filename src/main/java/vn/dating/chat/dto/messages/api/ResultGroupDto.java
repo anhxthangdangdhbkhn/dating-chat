@@ -21,5 +21,6 @@ public class ResultGroupDto {
     private String time;
     private String adminEmail;
     private GroupType type;
+    private String avatar;
     private List<UserDto> members = new ArrayList<>();
 }
