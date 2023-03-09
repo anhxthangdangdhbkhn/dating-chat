@@ -105,4 +105,7 @@ public class User extends DateAudit {
 
     @OneToMany(mappedBy = "userReceive", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<UserReceive> userReceive;
+
+    @OneToMany(mappedBy = "userToken", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private List<Token> tokens;
 }

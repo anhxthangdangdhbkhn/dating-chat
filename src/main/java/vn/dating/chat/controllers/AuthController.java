@@ -1,5 +1,7 @@
 package vn.dating.chat.controllers;
 
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,18 +11,22 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import vn.dating.chat.dto.auth.AuthLoginDto;
-import vn.dating.chat.dto.auth.JwtAuthenticationResponse;
-import vn.dating.chat.dto.auth.RegisterNewDto;
-import vn.dating.chat.dto.auth.UserProfile;
+import vn.dating.chat.dto.auth.*;
 import vn.dating.chat.exceptions.ResourceNotFoundException;
+import vn.dating.chat.mapper.AuthMapper;
+import vn.dating.chat.model.Token;
 import vn.dating.chat.model.User;
+import vn.dating.chat.repositories.TokenRepository;
 import vn.dating.chat.securities.JwtTokenProvider;
 import vn.dating.chat.securities.UserLogged;
 import vn.dating.chat.services.UserService;
 
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.net.InetAddress;
+import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -33,6 +39,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private TokenRepository tokenRepository;
 
 
     @Autowired
@@ -49,15 +58,53 @@ public class AuthController {
 
 
     @ResponseBody
-    @PostMapping(value = "/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody AuthLoginDto authLoginDto) {
+    @PostMapping(value = "/login2")
+    public ResponseEntity loginUser2(@Valid @RequestBody AuthLoginDto authLoginDto, HttpServletRequest request) {
 
         String email = authLoginDto.getEmail();
         String password = authLoginDto.getPassword();
         log.info("Email {}",email);
         log.info("Password {}",password);
 
-        User userGet = userService.findByEmail(email).orElseThrow(()-> {
+
+        User currentUser = userService.findByEmail(email).orElseThrow(()-> {
+            throw new ResourceNotFoundException("user","email",email);});
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authLoginDto.getEmail(), authLoginDto.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        AuthDto authDto = tokenProvider.generateConnect(currentUser,authentication);
+
+        if(authDto==null) return ResponseEntity.badRequest().build();
+
+        return ResponseEntity.ok(authDto);
+    }
+
+    @ResponseBody
+    @PostMapping(value = "/login")
+    public ResponseEntity<?> loginUser(@Valid @RequestBody AuthLoginDto authLoginDto, HttpServletRequest request) {
+
+        String email = authLoginDto.getEmail();
+        String password = authLoginDto.getPassword();
+        log.info("Email {}",email);
+        log.info("Password {}",password);
+
+//        String ipAddress = request.getRemoteAddr();
+//        String location = "";
+//        try {
+//            // Load the MaxMind GeoIP database
+//            DatabaseReader dbReader = new DatabaseReader.Builder(getClass().getResourceAsStream("/GeoLite2-City.mmdb")).build();
+//            // Get the location information for the IP address
+//            CityResponse response = dbReader.city(InetAddress.getByName(ipAddress));
+//            location = response.getCity().getName() + ", " + response.getCountry().getName();
+//            log.info(location);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+        User currentUser = userService.findByEmail(email).orElseThrow(()-> {
             throw new ResourceNotFoundException("user","email",email);});
 
         Authentication authentication = authenticationManager.authenticate(
@@ -67,11 +114,9 @@ public class AuthController {
 
         UserProfile userProfile = new UserProfile();
 
+        AuthDto authDto = tokenProvider.generateConnect(currentUser,authentication);
 
-        String token = tokenProvider.generateToken(authentication);
-        String refreshToken = tokenProvider.generateRefreshToken(authentication);
-
-        return ResponseEntity.ok(new JwtAuthenticationResponse(token,refreshToken, userGet.getAvatar(),userProfile.userProfileConvert(userGet)));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(authDto.getAccessToken(), authDto.getRefreshToken(), currentUser.getAvatar(),userProfile.userProfileConvert(currentUser)));
     }
 
     @PostMapping(value = "/refreshToken")
@@ -82,8 +127,7 @@ public class AuthController {
         User user = userService.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "Email", ""));
         String password = user.getPassword();
 
-
-        User userGet = userService.findByEmail(email).orElseThrow(()-> {
+        User currentUser = userService.findByEmail(email).orElseThrow(()-> {
             throw new ResourceNotFoundException("user","email",email);});
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password));
@@ -92,11 +136,9 @@ public class AuthController {
 
         UserProfile userProfile = new UserProfile();
 
+        AuthDto authDto = tokenProvider.generateConnect(currentUser,authentication);
 
-        String token = tokenProvider.generateToken(authentication);
-        String refreshToken = tokenProvider.generateRefreshToken(authentication);
-
-        return ResponseEntity.ok(new JwtAuthenticationResponse(token,refreshToken,user.getAvatar(), userProfile.userProfileConvert(userGet)));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(authDto.getAccessToken(),authDto.getRefreshToken(),user.getAvatar(), userProfile.userProfileConvert(currentUser)));
     }
 
     @PostMapping(value = "/register")
@@ -137,4 +179,78 @@ public class AuthController {
 
         return new ResponseEntity<>("verify is false", HttpStatus.OK);
     }
+
+    @RequestMapping(value = "/deviceAccess", method = RequestMethod.GET)
+    public ResponseEntity  deviceAccess(Principal principal){
+
+        if(principal ==null){
+            return ResponseEntity.badRequest().build();
+        }
+
+        String principalName = principal.getName();
+        User currentUser = userService.findByEmail(principalName).orElse(null);
+
+        if(currentUser ==null){
+            return ResponseEntity.badRequest().build();
+        }
+
+        return new ResponseEntity(AuthMapper.toGetListAccess(currentUser.getTokens()),HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/deviceAccess/{tokenId}", method = RequestMethod.DELETE)
+    public ResponseEntity<String> deleteDeviceAccess(@PathVariable("tokenId") Long tokenId, Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String principalName = principal.getName();
+        User currentUser = userService.findByEmail(principalName).orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Token tokenToDelete = tokenRepository.findById(tokenId).orElse(null);
+
+        if (tokenToDelete == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!tokenToDelete.getUserToken().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        tokenRepository.delete(tokenToDelete);
+
+        return ResponseEntity.ok("Device access deleted successfully");
+    }
+
+    @RequestMapping(value = "/logout/{token}", method = RequestMethod.DELETE)
+    public ResponseEntity<String> logout(@PathVariable("token") String token,Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String principalName = principal.getName();
+        User currentUser = userService.findByEmail(principalName).orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<Token> lists =  tokenRepository.findByAccessTokenOrRefreshToken(token,token);
+        if(lists.size()==0) return ResponseEntity.badRequest().build();
+
+
+        tokenRepository.deleteByAccessTokenOrRefreshToken(token,token);
+
+
+
+//        tokenService.deleteAllByUser(currentUser);
+
+        return ResponseEntity.ok("Logged out successfully");
+    }
+
 }
