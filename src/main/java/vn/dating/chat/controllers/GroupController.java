@@ -171,7 +171,8 @@ public class GroupController {
         List<Long> listGroup = groupService.existChatTwoUser(principalName, withUser.getEmail());
         if(listGroup ==null){
 
-            return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
+
+            return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,UserMapper.toGetContact(withUser)));
         } else if (listGroup.size()==1) {
             long groupId = listGroup.get(0);
             return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,groupService.getChatInfoGroup(groupId,currentUser)));

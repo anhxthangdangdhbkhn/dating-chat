@@ -156,13 +156,13 @@ public class GroupService {
         Group group = getGroupById(groupId);
         ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
 
-        List<GroupMember> groupMembers = groupMemberRepository.findByGroupId(groupId);
+      //  List<GroupMember> groupMembers = groupMemberRepository.findByGroupId(groupId);
 
-        List<User> members = new ArrayList<>();
+        List<User> members = userService.getUsersInGroup(groupId);
 
-        groupMembers.forEach(g->{
-            members.add(g.getUser());
-        });
+//        groupMembers.forEach(g->{
+//            members.add(g.getUser());
+//        });
 
         if(members.size()==2){
             if(members.get(1).getEmail().contains(current.getEmail())){
@@ -186,10 +186,10 @@ public class GroupService {
 
         ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
 
-        List<User> groupUser = new ArrayList<>();
-        groupMembers.forEach(m->{
-            groupUser.add(m.getUser());
-        });
+        List<User> groupUser = userService.getUsersInGroup(group.getId());
+//        groupMembers.forEach(m->{
+//            groupUser.add(m.getUser());
+//        });
 
         if(userList.size()==2){
             if(userList.get(1).getEmail().contains(current.getEmail())){

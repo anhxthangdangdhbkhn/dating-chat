@@ -17,6 +17,8 @@ import vn.dating.chat.repositories.UserRepository;
 import vn.dating.chat.utils.NotificationEmail;
 import vn.dating.chat.utils.PagedResponse;
 
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +40,9 @@ public class UserService {
     @Autowired
     private  MailService mailService;
 
+
+    @Autowired
+    private EntityManager entityManager;
 
     public User createUser(User user) {
         return userRepository.save(user);
@@ -143,6 +148,17 @@ public class UserService {
 
         return true;
     }
+
+    public List<User> getUsersInGroup(Long groupId) {
+        TypedQuery<User> query = entityManager.createQuery(
+                "SELECT gm.user FROM GroupMember gm " +
+                        "WHERE gm.group.id = :groupId",
+                User.class);
+        query.setParameter("groupId", groupId);
+        List<User> result = query.getResultList();
+        return result;
+    }
+
 
 }
 

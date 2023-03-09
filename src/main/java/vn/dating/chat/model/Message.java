@@ -17,7 +17,6 @@ public class Message extends DateAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String chatId;
     private String content;
     private boolean delete;
 
