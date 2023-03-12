@@ -5,6 +5,7 @@ import org.hibernate.annotations.NaturalId;
 import vn.dating.chat.model.audit.DateAudit;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -25,6 +26,9 @@ public class Group extends DateAudit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private List<Message> messages;
 
     @Enumerated(EnumType.STRING)
     private GroupType type;

@@ -2,10 +2,15 @@ package vn.dating.chat.controllers;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
+import eu.bitwalker.useragentutils.Browser;
+import eu.bitwalker.useragentutils.DeviceType;
+import eu.bitwalker.useragentutils.UserAgent;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.uadetector.UserAgentStringParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,9 +29,13 @@ import vn.dating.chat.services.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.net.InetAddress;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
+
+import ua_parser.Client;
+import ua_parser.Parser;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -58,31 +67,6 @@ public class AuthController {
 
 
     @ResponseBody
-    @PostMapping(value = "/login2")
-    public ResponseEntity loginUser2(@Valid @RequestBody AuthLoginDto authLoginDto, HttpServletRequest request) {
-
-        String email = authLoginDto.getEmail();
-        String password = authLoginDto.getPassword();
-        log.info("Email {}",email);
-        log.info("Password {}",password);
-
-
-        User currentUser = userService.findByEmail(email).orElseThrow(()-> {
-            throw new ResourceNotFoundException("user","email",email);});
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authLoginDto.getEmail(), authLoginDto.getPassword()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        AuthDto authDto = tokenProvider.generateConnect(currentUser,authentication);
-
-        if(authDto==null) return ResponseEntity.badRequest().build();
-
-        return ResponseEntity.ok(authDto);
-    }
-
-    @ResponseBody
     @PostMapping(value = "/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody AuthLoginDto authLoginDto, HttpServletRequest request) {
 
@@ -91,19 +75,6 @@ public class AuthController {
         log.info("Email {}",email);
         log.info("Password {}",password);
 
-//        String ipAddress = request.getRemoteAddr();
-//        String location = "";
-//        try {
-//            // Load the MaxMind GeoIP database
-//            DatabaseReader dbReader = new DatabaseReader.Builder(getClass().getResourceAsStream("/GeoLite2-City.mmdb")).build();
-//            // Get the location information for the IP address
-//            CityResponse response = dbReader.city(InetAddress.getByName(ipAddress));
-//            location = response.getCity().getName() + ", " + response.getCountry().getName();
-//            log.info(location);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
         User currentUser = userService.findByEmail(email).orElseThrow(()-> {
             throw new ResourceNotFoundException("user","email",email);});
 
@@ -114,21 +85,33 @@ public class AuthController {
 
         UserProfile userProfile = new UserProfile();
 
-        AuthDto authDto = tokenProvider.generateConnect(currentUser,authentication);
+        AuthDto authDto = tokenProvider.generateConnect(request,currentUser,authentication);
 
-        return ResponseEntity.ok(new JwtAuthenticationResponse(authDto.getAccessToken(), authDto.getRefreshToken(), currentUser.getAvatar(),userProfile.userProfileConvert(currentUser)));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(authDto, currentUser.getAvatar(),userProfile.userProfileConvert(currentUser)));
     }
 
-    @PostMapping(value = "/refreshToken")
-    public ResponseEntity<?> refreshToken() {
 
-        UserLogged userLogged = new UserLogged();
-        String email = userLogged.getEmail();
-        User user = userService.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "Email", ""));
-        String password = user.getPassword();
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/refreshToken/{refreshToken}",method = RequestMethod.GET)
+    public ResponseEntity refreshToken(@Valid @PathVariable("refreshToken") String refreshToken,Principal principal) {
 
-        User currentUser = userService.findByEmail(email).orElseThrow(()-> {
-            throw new ResourceNotFoundException("user","email",email);});
+        log.info("get refreshToken");
+
+        if(principal ==null){
+            return ResponseEntity.badRequest().build();
+        }
+
+
+        Token currentToken  = tokenRepository.findByRefreshToken(refreshToken).orElse(null);
+        if(currentToken ==null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        User currentUser = currentToken.getUserToken();
+
+        String email = currentUser.getEmail();
+        String password = currentUser.getPassword();
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password));
 
@@ -136,9 +119,9 @@ public class AuthController {
 
         UserProfile userProfile = new UserProfile();
 
-        AuthDto authDto = tokenProvider.generateConnect(currentUser,authentication);
+        AuthDto authDto = tokenProvider.updateRefreshToken(authentication,currentToken);
 
-        return ResponseEntity.ok(new JwtAuthenticationResponse(authDto.getAccessToken(),authDto.getRefreshToken(),user.getAvatar(), userProfile.userProfileConvert(currentUser)));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(authDto, currentUser.getAvatar(),userProfile.userProfileConvert(currentUser)));
     }
 
     @PostMapping(value = "/register")
@@ -167,8 +150,8 @@ public class AuthController {
         return new ResponseEntity("Your register Failed", HttpStatus.EXPECTATION_FAILED);
     }
 
-    @RequestMapping(value = "/verify/{token}", method = RequestMethod.GET)
-    public ResponseEntity  verify(@PathVariable("token") String token){
+    @RequestMapping(value = "/verifyAccount/{token}", method = RequestMethod.GET)
+    public ResponseEntity  verifyAccount(@PathVariable("token") String token){
 
         User getUser = userService.findByCreateToken(token).orElseThrow(()-> {
             throw new ResourceNotFoundException("User","createToken",token);});
@@ -180,8 +163,37 @@ public class AuthController {
         return new ResponseEntity<>("verify is false", HttpStatus.OK);
     }
 
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/checkToken", method = RequestMethod.GET)
+    public ResponseEntity  checkToken(){
+
+//        List<Token> list = tokenRepository.findByAccessTokenOrRefreshToken(token,token);
+//        if(list.size()>0) return new ResponseEntity<>("verify is false", HttpStatus.OK);
+        return new ResponseEntity<>("OK", HttpStatus.OK);
+    }
+
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/deviceAccess", method = RequestMethod.GET)
-    public ResponseEntity  deviceAccess(Principal principal){
+    public ResponseEntity  deviceAccess(Principal principal, HttpServletRequest request){
+
+        String userAgent = request.getHeader("User-Agent");
+        UserAgent parsedUserAgent = UserAgent.parseUserAgentString(userAgent);
+        Browser browser = parsedUserAgent.getBrowser();
+        String browserName = browser.getName();
+        String browserVersion = parsedUserAgent.getBrowserVersion().getVersion();
+        DeviceType deviceType = parsedUserAgent.getOperatingSystem().getDeviceType();
+        String ipAddress = request.getRemoteAddr();
+
+
+
+
+
+        log.info(browserName);
+        log.info(browserVersion);
+        log.info(deviceType.getName());
+        log.info(ipAddress);
 
         if(principal ==null){
             return ResponseEntity.badRequest().build();
@@ -197,8 +209,10 @@ public class AuthController {
         return new ResponseEntity(AuthMapper.toGetListAccess(currentUser.getTokens()),HttpStatus.OK);
     }
 
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/deviceAccess/{tokenId}", method = RequestMethod.DELETE)
-    public ResponseEntity<String> deleteDeviceAccess(@PathVariable("tokenId") Long tokenId, Principal principal) {
+    public ResponseEntity deleteDeviceAccess(@PathVariable("tokenId") Long tokenId, Principal principal) {
 
         if (principal == null) {
             return ResponseEntity.badRequest().build();
@@ -226,8 +240,10 @@ public class AuthController {
         return ResponseEntity.ok("Device access deleted successfully");
     }
 
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/logout/{token}", method = RequestMethod.DELETE)
-    public ResponseEntity<String> logout(@PathVariable("token") String token,Principal principal) {
+    public ResponseEntity logout(@PathVariable("token") String token,Principal principal) {
 
         if (principal == null) {
             return ResponseEntity.badRequest().build();
@@ -243,12 +259,7 @@ public class AuthController {
         List<Token> lists =  tokenRepository.findByAccessTokenOrRefreshToken(token,token);
         if(lists.size()==0) return ResponseEntity.badRequest().build();
 
-
         tokenRepository.deleteByAccessTokenOrRefreshToken(token,token);
-
-
-
-//        tokenService.deleteAllByUser(currentUser);
 
         return ResponseEntity.ok("Logged out successfully");
     }

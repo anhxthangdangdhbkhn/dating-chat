@@ -3,6 +3,9 @@ package vn.dating.chat.configs.socket;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -13,14 +16,18 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 import vn.dating.chat.securities.CustomUserDetailsService;
 import vn.dating.chat.securities.JwtTokenProvider;
 
+import java.net.URI;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -34,27 +41,26 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/ws");
-       // config.setUserDestinationPrefix("/user/{username}");
-
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-//                .setHandshakeHandler(new UserHandSakeHandler())
-                .setAllowedOriginPatterns("*").withSockJS();
+                .setAllowedOriginPatterns("*").withSockJS().setWebSocketEnabled(true);
     }
+
+
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                log.info("new connect socket");
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
@@ -73,10 +79,6 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
                                 Long userId = tokenProvider.getUserIdFromJWT(token);
 
                                 UserDetails userDetails = customUserDetailsService.loadUserById(userId);
-//                                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-//                                        userDetails, null, userDetails.getAuthorities());
-//                                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                                 String gmail =  userDetails.getUsername();
                                 Principal principal = new Principal() {
                                     @Override
@@ -88,64 +90,12 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 //                                accessor.setSessionId(gmail);
                             }
                         }
-
                     }
-
                 }
-
                 return message;
             }
         });
-
-
     }
 
 
-
 }
-
-
-
-    //    @Override
-//    public void configureClientInboundChannel(ChannelRegistration registration) {
-//
-//
-//        registration.interceptors(new ChannelInterceptor() {
-//            @Override
-//            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-//                log.info("test new");
-//                StompHeaderAccessor accessor =
-//                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-//                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-//                    Authentication user = null;
-//                    accessor.setUser(user);
-//                }
-//                return message;
-//            }
-//        });
-//    }
-
-//    @Override
-//    public void configureClientOutboundChannel(ChannelRegistration registration) {
-//                registration.interceptors(new ChannelInterceptor() {
-//            @Override
-//            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-//                log.info("test new");
-//
-//                StompHeaderAccessor accessor =
-//                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-//                log.info("accessor {}",accessor.toString());
-//                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-//                    Authentication user = null;
-//                    accessor.setUser(user);
-//                }
-//                return message;
-//            }
-//        });
-//    }
-
-
-    //    @Override
-//    protected boolean sameOriginDisabled() {
-//        return true;
-//    }

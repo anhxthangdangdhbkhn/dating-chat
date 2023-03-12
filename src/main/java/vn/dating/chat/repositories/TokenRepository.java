@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.dating.chat.model.Token;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TokenRepository extends JpaRepository<Token,Long> {
@@ -13,4 +14,7 @@ public interface TokenRepository extends JpaRepository<Token,Long> {
 
     @Transactional
     void deleteByAccessTokenOrRefreshToken(String accessToken, String refreshToken);
+
+
+    Optional<Token> findByRefreshToken(String accesstoken);
 }

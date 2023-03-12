@@ -49,6 +49,27 @@
 			<version>2.16.0</version>
 		</dependency>
 
+
+		<!-- https://mvnrepository.com/artifact/eu.bitwalker/UserAgentUtils -->
+		<dependency>   <groupId>eu.bitwalker</groupId>
+			<artifactId>UserAgentUtils</artifactId>
+			<version>1.20</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.ua-parser</groupId>
+			<artifactId>uap-java</artifactId>
+			<version>1.4.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.jwebmp</groupId>
+			<artifactId>uadetector-core</artifactId>
+			<version>0.66.0.1</version>
+		</dependency>
+
+
+
 <!--		websocket-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

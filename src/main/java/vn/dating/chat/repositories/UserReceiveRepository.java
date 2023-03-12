@@ -7,5 +7,5 @@ import vn.dating.chat.model.UserReceive;
 
 public interface UserReceiveRepository extends JpaRepository<UserReceive,Long> {
 
-    Page<UserReceive> findByGroupChatId(Long groupId, Pageable pageable);
+//    Page<UserReceive> findByGroupChatId(Long groupId, Pageable pageable);
 }

@@ -89,6 +89,8 @@ public class MessageService {
 
 //        List<String> listUsers = getAllUserOfGroup(messagePrivateGroupOutputDto.getGroupId());
 
+        log.info(messagePrivateGroupOutputDto.toString());
+
         List<User> userList = getUsersInGroup(messagePrivateGroupOutputDto.getGroupId());
         Group currentGroup = groupRepository.findById(messagePrivateGroupOutputDto.getGroupId()).orElse(null);
 
@@ -105,13 +107,13 @@ public class MessageService {
         message.setDelete(false);
         message.setSender(userService.getUserByEmail(principal.getName()));
         message.setContent(messagePrivateGroupOutputDto.getContent());
+        message.setGroup(currentGroup);
         message = messageRepository.save(message);
 
         for(int index =0;index < userList.size();index++){
             UserReceive userReceive = new UserReceive();
             userReceive.setDelete(false);
             userReceive.setCreatedAt(Instant.now());
-            userReceive.setGroupChat(currentGroup);
             userReceive.setUserReceive(userList.get(index));
             userReceive.setReceiveChat(message);
             userReceiveService.save(userReceive);

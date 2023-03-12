@@ -21,4 +21,5 @@ public class AuthDto {
     private String deviceId;
     private String deviceOS;
     private String location;
+    private String ip;
 }

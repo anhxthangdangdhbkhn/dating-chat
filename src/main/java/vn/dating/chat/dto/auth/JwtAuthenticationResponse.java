@@ -1,11 +1,16 @@
 package vn.dating.chat.dto.auth;
 
+import java.time.Instant;
+
 public class JwtAuthenticationResponse {
     private String accessToken;
     private String refreshToken;
     private Long userId;
     private String email;
     private String avatar;
+    private Long tokenId;
+    private Instant accessExpiry;
+    private Instant refreshExpiry;
 
     private String tokenType = "Bearer";
 
@@ -16,6 +21,17 @@ public class JwtAuthenticationResponse {
         this.userId = user.getId();
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.avatar = avatar;
+    }
+
+    public JwtAuthenticationResponse(AuthDto authDto, String avatar, UserProfile user) {
+        this.email = user.getEmail();
+        this.userId = user.getId();
+        this.accessToken = authDto.getAccessToken();
+        this.refreshToken = authDto.getRefreshToken();
+        this.tokenId = authDto.getId();
+        this.accessExpiry = authDto.getAccessExpiry();
+        this.refreshExpiry = authDto.getRefreshExpiry();
         this.avatar = avatar;
     }
 
@@ -65,5 +81,29 @@ public class JwtAuthenticationResponse {
 
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;
+    }
+
+    public Long getTokenId() {
+        return tokenId;
+    }
+
+    public void setTokenId(Long tokenId) {
+        this.tokenId = tokenId;
+    }
+
+    public Instant getAccessExpiry() {
+        return accessExpiry;
+    }
+
+    public void setAccessExpiry(Instant accessExpiry) {
+        this.accessExpiry = accessExpiry;
+    }
+
+    public Instant getRefreshExpiry() {
+        return refreshExpiry;
+    }
+
+    public void setRefreshExpiry(Instant refreshExpiry) {
+        this.refreshExpiry = refreshExpiry;
     }
 }

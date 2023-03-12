@@ -37,14 +37,14 @@ public class MessageController {
 //        return null;
 //    }
 
-        @GetMapping
-    public ResultGroupMessage getAllMovies(@CurrentUser UserPrincipal currentUser,
-                                           @RequestParam(value = "groupId") long groupId,
-                                           @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
-                                           @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
-
-            ResultGroupMessage resultGroupMessage = userReceiveService.findMessageByGroupId(groupId,page,size);
-            return  resultGroupMessage;
-    }
+//        @GetMapping
+//    public ResultGroupMessage getAllMovies(@CurrentUser UserPrincipal currentUser,
+//                                           @RequestParam(value = "groupId") long groupId,
+//                                           @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
+//                                           @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
+//
+//            ResultGroupMessage resultGroupMessage = userReceiveService.findMessageByGroupId(groupId,page,size);
+//            return  resultGroupMessage;
+//    }
 
 }

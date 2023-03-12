@@ -27,5 +27,8 @@ public class Message extends DateAudit {
     @OneToMany(mappedBy = "receiveChat", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<UserReceive> receiveChat;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
 
 }

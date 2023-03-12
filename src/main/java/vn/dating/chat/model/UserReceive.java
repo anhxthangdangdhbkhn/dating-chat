@@ -24,9 +24,6 @@ public class UserReceive extends DateAudit {
     @JoinColumn(name = "receive_user_id")
     private User userReceive;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id")
-    private Group groupChat;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receive_chat_id")
