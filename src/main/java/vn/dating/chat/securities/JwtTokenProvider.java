@@ -18,6 +18,7 @@ import vn.dating.chat.mapper.AuthMapper;
 import vn.dating.chat.model.Token;
 import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.TokenRepository;
+import vn.dating.chat.utils.TimeCurrent;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -78,12 +79,13 @@ public class JwtTokenProvider {
         }
 
 
-        Date now = new Date();
-        Date expiryToken = new Date(now.getTime() + jwtExpirationInMs);
-        Date expiryRefresh = new Date(now.getTime() + jwtExpirationInMsReToken);
+        Date timeCurrent = TimeCurrent.getDateSystemDefault();
 
-        String accessToken = generateToken(authentication,expiryToken);
-        String refreshToken = generateToken(authentication,expiryRefresh);
+        Date expiryToken = new Date(timeCurrent.getTime() + jwtExpirationInMs);
+        Date expiryRefresh = new Date(timeCurrent.getTime() + jwtExpirationInMsReToken);
+
+        String accessToken = generateToken(authentication,expiryToken,timeCurrent);
+        String refreshToken = generateToken(authentication,expiryRefresh,timeCurrent);
 
 
         Token token = new Token();
@@ -106,12 +108,17 @@ public class JwtTokenProvider {
 
     public AuthDto updateRefreshToken( Authentication authentication, Token currentToken){
 
-        Date now = new Date();
+        Date now = TimeCurrent.getDateSystemDefault();
+
         Date expiryToken = new Date(now.getTime() + jwtExpirationInMs);
         Date expiryRefresh = new Date(now.getTime() + jwtExpirationInMsReToken);
 
-        String accessToken = generateToken(authentication,expiryToken);
-        String refreshToken = generateToken(authentication,expiryRefresh);
+        LocalDateTime localDateTime = LocalDateTime.now();
+        Instant japanTime = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+        Date currentTime  = Date.from(japanTime);
+
+        String accessToken = generateToken(authentication,expiryToken,currentTime);
+        String refreshToken = generateToken(authentication,expiryRefresh,currentTime);
 
         User currentUser = currentToken.getUserToken();
 
@@ -136,18 +143,11 @@ public class JwtTokenProvider {
 
 
 
-    public String generateToken(Authentication authentication,Date expiryToken) {
-
-        LocalDateTime localDateTime = LocalDateTime.now();
-//        log.info(localDateTime.atZone(ZoneId.systemDefault()).toString());
-        Instant japanTime = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
-        Date now  = Date.from(japanTime);
-        log.info(now.toInstant().toString());
-
-        log.info(expiryToken.toInstant().toString());
-
+    public String generateToken(Authentication authentication,Date expiryToken,Date currentTime) {
+        log.info("generateToken at: " + currentTime);
+        log.info("expiryToken at: " + expiryToken);
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        String accessToken =  Jwts.builder().setSubject(Long.toString(userPrincipal.getId())).setIssuedAt(now)
+        String accessToken =  Jwts.builder().setSubject(Long.toString(userPrincipal.getId())).setIssuedAt(currentTime)
                 .setExpiration(expiryToken).signWith(SignatureAlgorithm.HS512, jwtSecret).compact();
         return accessToken;
     }
@@ -156,6 +156,9 @@ public class JwtTokenProvider {
     public Long getUserIdFromJWT(String token) {
         logger.info("getUserIdFromJWT");
         Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
+        log.info( claims.getExpiration().toInstant().toString());
+        log.info( claims.getIssuedAt().toInstant().toString());
+        claims.getExpiration().toInstant().toString();
 
         return Long.parseLong(claims.getSubject());
     }
@@ -165,7 +168,19 @@ public class JwtTokenProvider {
         if (lists.size()==0) return false;
         try {
             logger.info("Token {}",authToken);
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken).getBody();
+          // Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+
+            Instant expiration = claims.getExpiration().toInstant();
+            log.info("get expiration from token: {}",Date.from(expiration));
+            log.info("get Current time : {}",Date.from(TimeCurrent.getInstantSystemDefault()));
+//
+//            String issue = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken).getBody().getIssuedAt().toInstant().toString();
+//            if(expiration.isAfter(TimeCurrent.getInstantSystemDefault())){
+//                return false;
+//            }
+//            log.info("get expiration from token: {}",expiration.toString());
+//            log.info("get issue from token: {}",issue);
             return true;
         } catch (SignatureException ex) {
             logger.error("Invalid JWT signature");
