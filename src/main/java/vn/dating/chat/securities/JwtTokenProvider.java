@@ -39,10 +39,10 @@ public class JwtTokenProvider {
     private String jwtSecret;
 
     @Value("${app.jwtExpirationInMs}")
-    private int jwtExpirationInMs;
+    private long jwtExpirationInMs;
 
     @Value("${app.jwtExpirationInMsReToken}")
-    private int jwtExpirationInMsReToken;
+    private long jwtExpirationInMsReToken;
 
     @Autowired
     private TokenRepository tokenRepository;

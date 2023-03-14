@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import vn.dating.chat.dto.messages.api.ResultGroupDto;
+import vn.dating.chat.dto.messages.api.ResultGroupMessage;
 import vn.dating.chat.dto.messages.socket.*;
 import vn.dating.chat.model.*;
 import vn.dating.chat.services.*;
@@ -78,20 +79,11 @@ public  class SocketController {
 
     @MessageMapping("/group-private-messages")
     @SendToUser("topic/group-private-messages")
-    public MessagePrivateGroupOutputDto sendMessageToGroup(MessagePrivateGroupDto messagePrivateGroupDto, Principal principal) {
-            log.info("group-private-messages");
-            String username = principal.getName();
-            String content = messagePrivateGroupDto.getContent();
-            MessagePrivateGroupOutputDto messageOutputDto = new MessagePrivateGroupOutputDto();
+    public ResultGroupMessage sendMessageToGroup(MessagePrivateGroupDto messagePrivateGroupDto, Principal principal) {
+        log.info("group-private-messages");
+        ResultGroupMessage resultGroupMessage = messageService.sendMessageToGroup(messagePrivateGroupDto,principal);
 
-            messageOutputDto.setContent(content);
-            messageOutputDto.setGroupId(messagePrivateGroupDto.getGroupId());
-            messageOutputDto.setSenderId(username);
-            messageOutputDto.setTime(messagePrivateGroupDto.getTime());
-
-            messageService.sendMessageToGroup(messageOutputDto,principal);
-
-            return messageOutputDto;
+        return resultGroupMessage;
     }
 
     @MessageMapping("/create-group-messages")
@@ -137,7 +129,7 @@ public  class SocketController {
                         messageOutputDto.setSenderId(currentUser.getEmail());
                         messageOutputDto.setTime(messageCreateGroupDto.getTime());
 
-                        messageService.sendMessageToGroup(messageOutputDto,principal);
+//                        messageService.sendMessageToGroup(messageOutputDto,principal);
 
 //                        messageService.sendMessageCreatedGroup(messageOutputDto,principal);
 

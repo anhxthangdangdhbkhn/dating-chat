@@ -2,6 +2,8 @@ package vn.dating.chat.dto.messages.socket;
 
 import lombok.*;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @ToString

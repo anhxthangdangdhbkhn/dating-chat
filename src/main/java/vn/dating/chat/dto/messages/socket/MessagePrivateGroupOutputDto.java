@@ -2,6 +2,8 @@ package vn.dating.chat.dto.messages.socket;
 
 import lombok.*;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @ToString
@@ -13,4 +15,6 @@ public class MessagePrivateGroupOutputDto {
     private Long groupId;
     private String senderId;
     private String time;
+    private Instant createdAt;
+    private long id;
 }

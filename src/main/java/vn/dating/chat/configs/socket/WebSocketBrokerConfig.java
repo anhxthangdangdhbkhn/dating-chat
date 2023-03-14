@@ -60,7 +60,7 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                log.info("new connect socket");
+//                log.info("new connect socket");
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
@@ -87,6 +87,7 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
                                     }
                                 };
                                 accessor.setUser(principal);
+                                log.info("New connect {}", principal.getName());
 //                                accessor.setSessionId(gmail);
                             }
                         }

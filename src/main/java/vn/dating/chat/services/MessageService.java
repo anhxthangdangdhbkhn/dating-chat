@@ -13,11 +13,15 @@ import vn.dating.chat.dto.messages.api.ResultGroupDto;
 import vn.dating.chat.dto.messages.api.ResultGroupMessage;
 import vn.dating.chat.dto.messages.api.ResultMessage;
 import vn.dating.chat.dto.messages.socket.MessagePrivateDto;
+import vn.dating.chat.dto.messages.socket.MessagePrivateGroupDto;
 import vn.dating.chat.dto.messages.socket.MessagePrivateGroupOutputDto;
+import vn.dating.chat.mapper.MessageMapper;
+import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.*;
 import vn.dating.chat.repositories.GroupMemberRepository;
 import vn.dating.chat.repositories.GroupRepository;
 import vn.dating.chat.repositories.MessageRepository;
+import vn.dating.chat.utils.PagedResponse;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -27,6 +31,7 @@ import java.security.Principal;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -186,26 +191,46 @@ public class MessageService {
         return userIds;
     }
 
-    public ResultGroupMessage findMessageByGroupId(Long groupId, int page, int size){
+//    public ResultGroupMessage findMessageByGroupId(Long groupId, int page, int size){
+//
+//        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
+//        Page<Message> messagePage =  messageRepository.findByGroupId(groupId,pageable);
+//
+//        ResultGroupMessage resultGroupMessage = new ResultGroupMessage();
+//        resultGroupMessage.setGroupId(groupId);
+//        messagePage.getContent().forEach(msg->{
+//            ResultMessage resultMessage = new ResultMessage();
+//            resultMessage.setId(msg.getId());
+//            resultMessage.setContent(msg.getContent());
+//            resultMessage.setSenderEmail(msg.getSender().getEmail());
+//            resultMessage.setSenderName(msg.getSender().getUsername());
+//            resultGroupMessage.addMessage(resultMessage);
+//        });
+//        return resultGroupMessage;
+//    }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
+    public PagedResponse findMessageByGroupId(Long groupId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         Page<Message> messagePage =  messageRepository.findByGroupId(groupId,pageable);
 
-        ResultGroupMessage resultGroupMessage = new ResultGroupMessage();
-        resultGroupMessage.setGroupId(groupId);
-        messagePage.getContent().forEach(msg->{
-            ResultMessage resultMessage = new ResultMessage();
-            resultMessage.setId(msg.getId());
-            resultMessage.setContent(msg.getContent());
-            resultMessage.setSenderEmail(msg.getSender().getEmail());
-            resultMessage.setSenderName(msg.getSender().getUsername());
+        if(messagePage.getNumberOfElements()==0){
+            return new PagedResponse<>(Collections.emptyList(), messagePage.getNumber(), messagePage.getSize(),
+                    messagePage.getTotalElements(), messagePage.getTotalPages(), messagePage.isLast());
+        }
 
+//        ResultGroupMessage resultGroupMessage = new ResultGroupMessage();
+//        resultGroupMessage.setGroupId(groupId);
+//        messagePage.getContent().forEach(msg->{
+//            ResultMessage resultMessage = new ResultMessage();
+//            resultMessage.setId(msg.getId());
+//            resultMessage.setContent(msg.getContent());
+//            resultMessage.setSenderEmail(msg.getSender().getEmail());
+//            resultMessage.setSenderName(msg.getSender().getUsername());
+//            resultGroupMessage.addMessage(resultMessage);
+//        });
 
-            resultGroupMessage.addMessage(resultMessage);
-
-        });
-
-        return resultGroupMessage;
+        return new PagedResponse<>(MessageMapper.toMessages(messagePage.getContent()).stream().toList(), messagePage.getNumber(), messagePage.getSize(), messagePage.getTotalElements(),
+                messagePage.getTotalPages(), messagePage.isLast());
     }
 
     @Transactional
@@ -263,14 +288,13 @@ public class MessageService {
 
 
 
-    public void sendMessageToGroup(MessagePrivateGroupOutputDto messagePrivateGroupOutputDto, Principal principal) {
+    public ResultGroupMessage sendMessageToGroup(MessagePrivateGroupDto messagePrivateGroupDto, Principal principal) {
 
 //        List<String> listUsers = getAllUserOfGroup(messagePrivateGroupOutputDto.getGroupId());
 
-        log.info(messagePrivateGroupOutputDto.toString());
 
-        List<User> userList = getUsersInGroup(messagePrivateGroupOutputDto.getGroupId());
-        Group currentGroup = groupRepository.findById(messagePrivateGroupOutputDto.getGroupId()).orElse(null);
+        List<User> userList = getUsersInGroup(messagePrivateGroupDto.getGroupId());
+        Group currentGroup = groupRepository.findById(messagePrivateGroupDto.getGroupId()).orElse(null);
 
 
         for(int i=0;i<userList.size();i++){
@@ -284,7 +308,7 @@ public class MessageService {
         message.setContent(message.getContent());
         message.setDelete(false);
         message.setSender(userService.getUserByEmail(principal.getName()));
-        message.setContent(messagePrivateGroupOutputDto.getContent());
+        message.setContent(messagePrivateGroupDto.getContent());
         message.setGroup(currentGroup);
         message = messageRepository.save(message);
 
@@ -297,13 +321,25 @@ public class MessageService {
             userReceiveService.save(userReceive);
         }
 
+        ResultGroupMessage resultGroupMessage = new ResultGroupMessage();
+
+        resultGroupMessage.setGroupId(messagePrivateGroupDto.getGroupId());
+        resultGroupMessage.setId(message.getId());
+        resultGroupMessage.setSenderEmail(message.getSender().getEmail());
+        resultGroupMessage.setContent(message.getContent());
+        resultGroupMessage.setCreatedAt(message.getCreatedAt());
+        resultGroupMessage.setSenderUsername(message.getSender().getUsername());
+
+        log.info(resultGroupMessage.toString());
 
 
 
         for(int i=0;i<userList.size();i++){
             log.info("sent to user " +userList.get(i).getEmail());
-            messagingTemplate.convertAndSendToUser(userList.get(i).getEmail(),"/topic/group-private-messages", messagePrivateGroupOutputDto);
+
+            messagingTemplate.convertAndSendToUser(userList.get(i).getEmail(),"/topic/group-private-messages", resultGroupMessage);
         }
+        return resultGroupMessage;
     }
 
     public void sendMessageCreatedGroup(ResultGroupDto resultGroupDto, Principal principal) {

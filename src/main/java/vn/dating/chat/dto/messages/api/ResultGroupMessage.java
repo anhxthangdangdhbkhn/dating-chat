@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,9 +15,14 @@ import java.util.List;
 @Builder
 public class ResultGroupMessage {
     private Long groupId;
-    private List<ResultMessage> messages = new ArrayList<>();
-
-    public void addMessage(ResultMessage resultMessage){
-        this.messages.add(resultMessage);
-    }
+    private Long id;
+    private String content;
+    private String senderUsername;
+    private String senderEmail;
+    private Instant createdAt;
+//    private List<ResultMessage> messages = new ArrayList<>();
+//
+//    public void addMessage(ResultMessage resultMessage){
+//        this.messages.add(resultMessage);
+//    }
 }

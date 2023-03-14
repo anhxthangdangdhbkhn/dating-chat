@@ -60,7 +60,7 @@ public class MessageController {
             if(!isMemberOfGroup) return  ResponseEntity.badRequest().build();
 
 
-            ResultGroupMessage resultGroupMessage = messageService.findMessageByGroupId(groupId,page,size);
+        PagedResponse resultGroupMessage = messageService.findMessageByGroupId(groupId,page,size);
             return  ResponseEntity.ok(resultGroupMessage);
     }
 
