@@ -18,6 +18,7 @@ import vn.dating.chat.utils.NotificationEmail;
 import vn.dating.chat.utils.PagedResponse;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 import java.time.Instant;
 import java.util.Collections;
@@ -62,12 +63,26 @@ public class UserService {
         return  userRepository.findById(id).orElse(null);
     }
 
+    Long findUserIdByEmail(String email){
+        Long userId;
+        try {
+            userId = entityManager.createQuery("SELECT u.id FROM User u WHERE u.email = :email", Long.class)
+                    .setParameter("email", email)
+                    .getSingleResult();
+            return userId;
+        } catch (NoResultException ex) {
+           return null;
+        }
+    }
+
 
     public boolean existsUserById(Long id){
         List user = userRepository.findUserById(id);
         if(user.size()==1) return true;
         else  return  false;
     }
+
+
 
     public User save(User user){return  userRepository.save(user);};
 

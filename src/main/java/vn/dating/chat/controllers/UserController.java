@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.User;
@@ -26,6 +27,7 @@ public class UserController {
         return userService.getAllUser(page,size);
     }
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity getUserById(@PathVariable("id") long id) {
         User user = userService.findById(id);
         if (user == null) {
@@ -35,6 +37,7 @@ public class UserController {
     }
 
     @GetMapping("/email")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity getUserByEmail(@RequestParam("email") String  email) {
         Optional<User> user = userService.findByEmail(email);
         if (user.isEmpty()) {
@@ -44,6 +47,7 @@ public class UserController {
     }
 
     @GetMapping("/contact")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity getContactByEmail(@RequestParam("email") String  email) {
         Optional<User> user = userService.findByEmail(email);
         if (user.isEmpty()) {

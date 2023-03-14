@@ -178,22 +178,6 @@ public class AuthController {
     @RequestMapping(value = "/deviceAccess", method = RequestMethod.GET)
     public ResponseEntity  deviceAccess(Principal principal, HttpServletRequest request){
 
-//        String userAgent = request.getHeader("User-Agent");
-//        UserAgent parsedUserAgent = UserAgent.parseUserAgentString(userAgent);
-//        Browser browser = parsedUserAgent.getBrowser();
-//        String browserName = browser.getName();
-//        String browserVersion = parsedUserAgent.getBrowserVersion().getVersion();
-//        DeviceType deviceType = parsedUserAgent.getOperatingSystem().getDeviceType();
-//        String ipAddress = request.getRemoteAddr();
-
-
-
-
-//
-//        log.info(browserName);
-//        log.info(browserVersion);
-//        log.info(deviceType.getName());
-//        log.info(ipAddress);
 
         if(principal ==null){
             return ResponseEntity.badRequest().build();

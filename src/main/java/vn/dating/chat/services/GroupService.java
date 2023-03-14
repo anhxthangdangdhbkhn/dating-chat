@@ -14,6 +14,7 @@ import vn.dating.chat.repositories.GroupRepository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +41,10 @@ public class GroupService {
 
     public Group getGroupById(Long id) {
         return groupRepository.findById(id).orElse(null);
+    }
+
+    public List<GroupMember> getGroupByIdAndUserId(long  groupId,long userId) {
+        return groupMemberRepository.findByGroupIdAndUserId(groupId,userId);
     }
 
     public Group getGroupByName(String name) {
@@ -104,6 +109,40 @@ public class GroupService {
 
         return  listUsers;
     }
+
+//    public boolean isUserMemberOfGroup(String userEmail, Long groupId) {
+//        TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(u) FROM user u JOIN u.groups g WHERE u.email = :userEmail AND g.id = :groupId", Long.class);
+//        query.setParameter("userEmail", userEmail);
+//        query.setParameter("groupId", groupId);
+//
+//        Long count = query.getSingleResult();
+//        return count > 0;
+//    }
+
+    public boolean isUserMemberOfGroup(String userEmail, Long groupId) {
+        TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(gm) FROM GroupMember as gm, User as u  WHERE u.email = :userEmail AND gm.id = :groupId", Long.class);
+        query.setParameter("userEmail", userEmail);
+        query.setParameter("groupId", groupId);
+
+        Long count = query.getSingleResult();
+        return count > 0;
+    }
+    public boolean isUserMemberOfGroup(String userEmail, Long groupId,GroupType groupType) {
+        TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(gm) FROM GroupMember as gm, User as u  WHERE u.email = :userEmail AND gm.id = :groupId", Long.class);
+        query.setParameter("userEmail", userEmail);
+        query.setParameter("groupId", groupId);
+
+        Long count = query.getSingleResult();
+        return count > 0;
+    }
+//    public boolean isUserMemberOfGroup(String userEmail, Long groupId,GroupType groupType,GroupMemberType groupMemberType) {
+//        TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(gm) FROM public.group_member as gm, users as u  WHERE u.email = :userEmail AND gm.group_id = :groupId", Long.class);
+//        query.setParameter("userEmail", userEmail);
+//        query.setParameter("groupId", groupId);
+//
+//        Long count = query.getSingleResult();
+//        return count > 0;
+//    }
 
     public boolean existChatTwoUser(Long userId1, Long userId2) {
 

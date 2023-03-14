@@ -3,6 +3,7 @@ package vn.dating.chat.controllers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.dating.chat.dto.messages.api.CreateGroupDto;
 import vn.dating.chat.dto.messages.api.ResultGroupDto;
@@ -40,6 +41,7 @@ public class GroupController {
 
 
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity createGroup(@RequestBody CreateGroupDto createGroupDto, Principal principal) {
 
         String principalName = principal.getName();
@@ -133,6 +135,7 @@ public class GroupController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Group> updateGroup(@PathVariable Long id, @RequestBody Group updatedGroup) {
         Group existingGroup = groupService.getGroupById(id);
         if (existingGroup == null) {
@@ -144,6 +147,7 @@ public class GroupController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity getGroup(@PathVariable Long id,Principal principal) {
 
         Group existingGroup = groupService.getGroupById(id);
@@ -159,6 +163,7 @@ public class GroupController {
     }
 
     @GetMapping("/with/{email}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity chatWithUser(@PathVariable String  email,Principal principal){
         User withUser = userService.getUserByEmail(email);
         String principalName = principal.getName();
@@ -183,6 +188,7 @@ public class GroupController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity getGroupsForUser(Principal principal) {
         User user = userService.findByEmail(principal.getName()).orElse(null);
         Map<Group, List<User>> data = groupService.getGroupsForUser(user.getId());

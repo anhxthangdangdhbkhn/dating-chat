@@ -10,5 +10,7 @@ import vn.dating.chat.model.Message;
 public interface MessageRepository extends JpaRepository<Message,Long> {
     Message save(Message message);
 
+    Page<Message> findByGroupId(Long groupId, Pageable pageable);
+
 
 }
