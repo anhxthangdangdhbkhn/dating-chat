@@ -190,6 +190,8 @@ public class GroupController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity getGroupsForUser(Principal principal) {
+
+
         User user = userService.findByEmail(principal.getName()).orElse(null);
         Map<Group, List<User>> data = groupService.getGroupsForUser(user.getId());
 

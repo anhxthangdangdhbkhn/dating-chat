@@ -24,6 +24,7 @@ import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.TokenRepository;
 import vn.dating.chat.securities.JwtTokenProvider;
 import vn.dating.chat.securities.UserLogged;
+import vn.dating.chat.services.AuthService;
 import vn.dating.chat.services.UserService;
 
 
@@ -36,6 +37,7 @@ import java.util.Optional;
 
 import ua_parser.Client;
 import ua_parser.Parser;
+import vn.dating.chat.utils.AppConstants;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -51,6 +53,9 @@ public class AuthController {
 
     @Autowired
     private TokenRepository tokenRepository;
+
+    @Autowired
+    private AuthService authService;
 
 
     @Autowired
@@ -176,7 +181,9 @@ public class AuthController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/deviceAccess", method = RequestMethod.GET)
-    public ResponseEntity  deviceAccess(Principal principal, HttpServletRequest request){
+    public ResponseEntity  deviceAccess(Principal principal,
+                                        @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
+                                        @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size){
 
 
         if(principal ==null){
@@ -190,7 +197,7 @@ public class AuthController {
             return ResponseEntity.badRequest().build();
         }
 
-        return new ResponseEntity(AuthMapper.toGetListAccess(currentUser.getTokens()),HttpStatus.OK);
+        return new ResponseEntity(authService.findTokensByUserId(currentUser.getId(),page,size),HttpStatus.OK);
     }
 
 
