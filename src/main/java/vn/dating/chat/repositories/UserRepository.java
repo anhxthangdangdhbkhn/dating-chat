@@ -20,7 +20,8 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String name);
 
-    @Query("SELECT u FROM User u WHERE u.email IN :emails")
+    @Modifying
+    @Query(value ="SELECT u FROM User u WHERE u.email IN :emails")
     List<User> findByEmails(@Param("emails") List<String> emails);
 
 

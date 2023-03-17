@@ -30,6 +30,9 @@ public class Group extends DateAudit {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<Message> messages;
 
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private List<GroupMember> members;
+
     @Enumerated(EnumType.STRING)
     private GroupType type;
 

@@ -2,24 +2,25 @@ package vn.dating.chat.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.dating.chat.dto.messages.api.CreateGroupDto;
 import vn.dating.chat.dto.messages.api.ResultGroupDto;
 import vn.dating.chat.mapper.GroupMapper;
+import vn.dating.chat.mapper.MessageMapper;
 import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.*;
 import vn.dating.chat.repositories.GroupMemberRepository;
 import vn.dating.chat.repositories.GroupRepository;
+import vn.dating.chat.utils.PagedResponse;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -63,7 +64,7 @@ public class GroupService {
         groupRepository.deleteById(id);
     }
 
-    public List<GroupMember> addUsersToGroup(Group group, List<User> membersToAdd,GroupMemberType groupMemberType) {
+    public boolean addUsersToGroup(Group group, List<User> membersToAdd,GroupMemberType groupMemberType) {
         List<GroupMember> groupMembers = new ArrayList<>();
         for (User member : membersToAdd) {
             GroupMember groupMember = new GroupMember();
@@ -73,11 +74,30 @@ public class GroupService {
             groupMembers.add(groupMember);
 
             groupMember = groupMemberRepository.save(groupMember);
-            groupMembers.add(groupMember);
+            if(groupMember !=null){
+                groupMembers.add(groupMember);
+            }
         }
-        return groupMembers;
-//        return groupMemberRepository.saveAll(groupMembers);
+        if(groupMembers.size() == membersToAdd.size()) return  true;
+        return false;
     }
+
+//    public List<GroupMember> addUsersToGroup(Group group, List<User> membersToAdd,GroupMemberType groupMemberType) {
+//        List<GroupMember> groupMembers = new ArrayList<>();
+//        for (User member : membersToAdd) {
+//            GroupMember groupMember = new GroupMember();
+//            groupMember.setGroup(group);
+//            groupMember.setUser(member);
+//            groupMember.setType(groupMemberType);
+//            groupMembers.add(groupMember);
+//
+//            groupMember = groupMemberRepository.save(groupMember);
+//            if(groupMember !=null){
+//                groupMembers.add(groupMember);
+//            }
+//        }
+//        return groupMembers;
+//    }
 
     public Map<Group, List<User>> getGroupsForUser(long userId){
 
@@ -95,6 +115,30 @@ public class GroupService {
 
         return groupsAndMembers;
 
+    }
+    public PagedResponse findGroupOfUser(User currentUser, int page, int size){
+
+        Pageable pageable = PageRequest.of(page, size);
+        Long userId  = currentUser.getId();
+        Page<Group> groupPage =   groupRepository.findDistinctByMembersUserId(userId,pageable);
+
+
+        if(groupPage.getNumberOfElements()==0){
+            return new PagedResponse<>(Collections.emptyList(), groupPage.getNumber(), groupPage.getSize(),
+                    groupPage.getTotalElements(), groupPage.getTotalPages(), groupPage.isLast());
+        }
+
+        List<Group> groupList = groupPage.stream().toList();
+        List<ResultGroupDto> resultGroupDtos = new ArrayList<>();
+
+        for(int index=0;index<groupList.size();index++){
+            Group group = groupList.get(index);
+            resultGroupDtos.add(getChatInfoGroup(group,currentUser));
+        }
+
+
+        return new PagedResponse<>(resultGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
+                groupPage.getTotalPages(), groupPage.isLast());
     }
 
     public List<String> getAllUserOfGroup(long groupId){
@@ -191,17 +235,11 @@ public class GroupService {
         }
     }
 
-    public ResultGroupDto getChatInfoGroup(Long groupId, User current){
-        Group group = getGroupById(groupId);
+    public ResultGroupDto getChatInfoGroup( Group group, User current){
+
         ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
 
-      //  List<GroupMember> groupMembers = groupMemberRepository.findByGroupId(groupId);
-
-        List<User> members = userService.getUsersInGroup(groupId);
-
-//        groupMembers.forEach(g->{
-//            members.add(g.getUser());
-//        });
+        List<User> members = userService.getUsersInGroup(group.getId());
 
         if(members.size()==2){
             if(members.get(1).getEmail().contains(current.getEmail())){
@@ -218,17 +256,35 @@ public class GroupService {
         return resultGroupDto;
     }
 
+    public ResultGroupDto getChatInfoGroup(Long groupId, User current){
+        Group group = getGroupById(groupId);
+        ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
+
+        List<User> members = userService.getUsersInGroup(groupId);
+
+        if(members.size()==2){
+            if(members.get(1).getEmail().contains(current.getEmail())){
+                resultGroupDto.setAvatar(members.get(0).getAvatar());
+                resultGroupDto.setName(members.get(0).getUsername());
+            }else {
+                resultGroupDto.setAvatar(members.get(1).getAvatar());
+                resultGroupDto.setName(members.get(1).getUsername());
+            }
+
+        }else resultGroupDto.setAvatar("https://via.placeholder.com/50x50");
+        resultGroupDto.setMembers(UserMapper.toGetListUsers(members));
+
+        return resultGroupDto;
+    }
     public ResultGroupDto createGroup(Group group, List<User> userList,User current,GroupMemberType groupMemberType){
 
 
-        List<GroupMember>   groupMembers = addUsersToGroup(group,userList,groupMemberType);
+        boolean checkAdd = addUsersToGroup(group,userList,groupMemberType);
+        if(checkAdd== false) return new ResultGroupDto();
+
 
         ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
-
         List<User> groupUser = userService.getUsersInGroup(group.getId());
-//        groupMembers.forEach(m->{
-//            groupUser.add(m.getUser());
-//        });
 
         if(userList.size()==2){
             if(userList.get(1).getEmail().contains(current.getEmail())){
@@ -245,5 +301,17 @@ public class GroupService {
 
         return resultGroupDto;
     }
+
+//    List<Group> getMessagesOfGroupsByTime(){
+//        Long userId = 1L;
+//        int pageNumber = 0;
+//        int pageSize = 10;
+//        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("updatedAt").descending());
+//        Page<Group> groupPage = groupRepository.findByUserIdOrderByLatestMessageCreatedAtDesc(userId, pageable);
+//
+//        List<Group> groupList = groupPage.getContent();
+//
+//        return groupList;
+//    }
 }
 
