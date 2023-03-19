@@ -135,8 +135,29 @@ public class GroupService {
             Group group = groupList.get(index);
             resultGroupDtos.add(getChatInfoGroup(group,currentUser));
         }
+        return new PagedResponse<>(resultGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
+                groupPage.getTotalPages(), groupPage.isLast());
+    }
+
+    public PagedResponse findTopGroupOfUser(User currentUser, int page, int size){
+
+        Pageable pageable = PageRequest.of(page, size);
+        Long userId  = currentUser.getId();
+        Page<Group> groupPage =   groupRepository.findGroupsByUserIdOrderByLastMessage(userId,pageable);
 
 
+        if(groupPage.getNumberOfElements()==0){
+            return new PagedResponse<>(Collections.emptyList(), groupPage.getNumber(), groupPage.getSize(),
+                    groupPage.getTotalElements(), groupPage.getTotalPages(), groupPage.isLast());
+        }
+
+        List<Group> groupList = groupPage.stream().toList();
+        List<ResultGroupDto> resultGroupDtos = new ArrayList<>();
+
+        for(int index=0;index<groupList.size();index++){
+            Group group = groupList.get(index);
+            resultGroupDtos.add(getChatInfoGroup(group,currentUser));
+        }
         return new PagedResponse<>(resultGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
                 groupPage.getTotalPages(), groupPage.isLast());
     }
@@ -280,7 +301,7 @@ public class GroupService {
 
 
         boolean checkAdd = addUsersToGroup(group,userList,groupMemberType);
-        if(checkAdd== false) return new ResultGroupDto();
+//        if(checkAdd== false) return new ResultGroupDto();
 
 
         ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);

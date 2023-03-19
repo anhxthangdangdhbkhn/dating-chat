@@ -24,7 +24,7 @@ import java.security.Principal;
 @RestController
 @RequestMapping("/api/v1/messages")
 @Slf4j
-public class MessageController {
+public class  MessageController {
     @Autowired
     private UserService userService;
 

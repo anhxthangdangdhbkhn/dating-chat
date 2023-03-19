@@ -122,7 +122,7 @@ public class GroupController {
             group.setType(GroupType.PUBLIC);
             group.setRandom(GroupRandomType.NONE);
             group.generateUrl();;
-            group.setName("PUBLIC");
+            group.setName(createPublicGroupDto.getName());
 
             group = groupService.saveGroup(group);
             if(group==null){
@@ -215,15 +215,27 @@ public class GroupController {
         PagedResponse pagedResponse = groupService.findGroupOfUser(currentUser,page,size);
 
         return  ResponseEntity.ok(pagedResponse);
-
-
-
 //        if(resultGroupDtos.size()==0){
 //            return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
 //        }
 //        return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,resultGroupDtos));
     }
 
+    @GetMapping("/groupTop")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity getTopNewMessageOfGroups(Principal principal ,
+                                                   @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
+                                                    @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
+
+        User currentUser = userService.findByEmail(principal.getName()).orElse(null);
+        PagedResponse pagedResponse = groupService.findTopGroupOfUser(currentUser,page,size);
+
+        return  ResponseEntity.ok(pagedResponse);
+//        if(resultGroupDtos.size()==0){
+//            return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
+//        }
+//        return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,resultGroupDtos));
+    }
 //    @DeleteMapping("/{id}")
 //    public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
 //        Group existingGroup = groupService.getGroupById(id);
