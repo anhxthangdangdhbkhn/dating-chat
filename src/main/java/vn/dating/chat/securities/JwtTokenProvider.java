@@ -18,7 +18,7 @@ import vn.dating.chat.mapper.AuthMapper;
 import vn.dating.chat.model.Token;
 import vn.dating.chat.model.User;
 import vn.dating.chat.repositories.TokenRepository;
-import vn.dating.chat.utils.TimeCurrent;
+import vn.dating.chat.utils.TimeHelper;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -79,7 +79,7 @@ public class JwtTokenProvider {
         }
 
 
-        Date timeCurrent = TimeCurrent.getDateSystemDefault();
+        Date timeCurrent = TimeHelper.getCurrentDateSystemDefault();
 
         Date expiryToken = new Date(timeCurrent.getTime() + jwtExpirationInMs);
         Date expiryRefresh = new Date(timeCurrent.getTime() + jwtExpirationInMsReToken);
@@ -108,7 +108,7 @@ public class JwtTokenProvider {
 
     public AuthDto updateRefreshToken( Authentication authentication, Token currentToken){
 
-        Date now = TimeCurrent.getDateSystemDefault();
+        Date now = TimeHelper.getCurrentDateSystemDefault();
 
         Date expiryToken = new Date(now.getTime() + jwtExpirationInMs);
         Date expiryRefresh = new Date(now.getTime() + jwtExpirationInMsReToken);
@@ -173,7 +173,7 @@ public class JwtTokenProvider {
 
             Instant expiration = claims.getExpiration().toInstant();
             log.info("get expiration from token: {}",Date.from(expiration));
-            log.info("get Current time : {}",Date.from(TimeCurrent.getInstantSystemDefault()));
+            log.info("get Current time : {}",Date.from(TimeHelper.getInstantSystemDefault()));
 //
 //            String issue = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken).getBody().getIssuedAt().toInstant().toString();
 //            if(expiration.isAfter(TimeCurrent.getInstantSystemDefault())){

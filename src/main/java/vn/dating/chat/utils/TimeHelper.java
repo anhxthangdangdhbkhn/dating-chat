@@ -3,10 +3,11 @@ package vn.dating.chat.utils;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-public class TimeCurrent {
-    public static Date getDateSystemDefault(){
+public class TimeHelper {
+    public static Date getCurrentDateSystemDefault(){
         LocalDateTime localDateTime = LocalDateTime.now();
         Instant japanTime = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
         Date currentTime  = Date.from(japanTime);
@@ -24,5 +25,12 @@ public class TimeCurrent {
 //                + currentTime.getHours()+":" + currentTime.getMinutes() +":"
 //                +currentTime.getSeconds());
         return  now;
+    }
+
+    public static Instant strToInstant(String time){
+        LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"));
+        ZoneId japanZoneId = ZoneId.of(ZoneId.systemDefault().getId());
+        Instant instant = localDateTime.atZone(japanZoneId).toInstant();
+        return  instant;
     }
 }

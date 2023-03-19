@@ -233,6 +233,18 @@ public class MessageService {
                 messagePage.getTotalPages(), messagePage.isLast());
     }
 
+    public PagedResponse findMessagesByGroupIdAfterOrderByCreatedAtDesc(Long groupId, int page, int size, Instant afterTime) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Message> messagePage =  messageRepository.findMessagesByGroupIdAndCreatedAtAfterOrderByCreatedAtDesc(groupId,afterTime,pageable);
+
+        if(messagePage.getNumberOfElements()==0){
+            return new PagedResponse<>(Collections.emptyList(), messagePage.getNumber(), messagePage.getSize(),
+                    messagePage.getTotalElements(), messagePage.getTotalPages(), messagePage.isLast());
+        }
+        return new PagedResponse<>(MessageMapper.toMessages(messagePage.getContent()).stream().toList(), messagePage.getNumber(), messagePage.getSize(), messagePage.getTotalElements(),
+                messagePage.getTotalPages(), messagePage.isLast());
+    }
+
     @Transactional
     public boolean saveMessageWithReceivers(String content,Long groupId, Long userId, List<Long> receiverIds) {
         boolean result = false;
