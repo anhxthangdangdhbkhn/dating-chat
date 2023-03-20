@@ -12,7 +12,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ResultMessage {
+public class ResultMessageDto {
     private Long id;
     private String content;
     private String senderUsername;

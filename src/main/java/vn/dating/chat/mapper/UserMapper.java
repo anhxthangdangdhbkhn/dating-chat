@@ -1,11 +1,12 @@
 package vn.dating.chat.mapper;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import vn.dating.chat.dto.auth.UserDto;
 import vn.dating.chat.dto.messages.api.ContactDto;
 import vn.dating.chat.model.User;
 
-import java.util.ArrayList;
+import java.lang.reflect.Type;
 import java.util.List;
 
 public class UserMapper {
@@ -21,11 +22,8 @@ public class UserMapper {
     }
 
     public static List<UserDto> toGetListUsers(List<User> users){
-
-        List<UserDto> userDtoList = new ArrayList<>();
-        users.forEach(user -> {
-            userDtoList.add(toGetUser(user));
-        });
-        return  userDtoList;
+        ModelMapper modelMapper = new ModelMapper();
+        Type listType = new TypeToken<List<UserDto>>() {}.getType();
+        return modelMapper.map(users,listType);
     }
 }

@@ -10,11 +10,12 @@ import vn.dating.chat.model.GroupType;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ResultGroupChatDto {
+public class ResultGroupMembersOfGroupDto {
     private Long id;
     private String name;
     private String time;
@@ -22,5 +23,4 @@ public class ResultGroupChatDto {
     private GroupType type;
     private String avatar;
     private List<UserDto> members = new ArrayList<>();
-    private List<ResultMessage> messages = new ArrayList<>();
 }

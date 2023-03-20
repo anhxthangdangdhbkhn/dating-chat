@@ -10,6 +10,7 @@ import vn.dating.chat.model.Message;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message,Long> {
@@ -25,5 +26,8 @@ public interface MessageRepository extends JpaRepository<Message,Long> {
             @Param("groupId") Long groupId,
             @Param("createdAtAfter") Instant afterTime,
             Pageable pageable);
+
+    @Query(value = "SELECT m.* FROM message m WHERE m.group_id = :groupId ORDER BY m.created_at DESC",nativeQuery = true)
+    List<Message> findLastTenMessagesByGroupId(@Param("groupId") Long groupId, Pageable pageable);
 
 }

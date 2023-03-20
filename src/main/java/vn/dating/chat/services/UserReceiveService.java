@@ -1,14 +1,7 @@
 package vn.dating.chat.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import vn.dating.chat.dto.messages.api.ResultGroupMessage;
-import vn.dating.chat.dto.messages.api.ResultMessage;
-import vn.dating.chat.model.Message;
 import vn.dating.chat.model.UserReceive;
 import vn.dating.chat.repositories.MessageRepository;
 import vn.dating.chat.repositories.UserReceiveRepository;

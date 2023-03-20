@@ -38,30 +38,19 @@ public class  MessageController {
     private GroupService groupService;
 
 //    @GetMapping
-//    public PagedResponse getAllMovies(@CurrentUser UserPrincipal currentUser,
-//                                      @RequestParam(value = "groupId") long groupId,
-//                                      @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
-//                                      @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity getMessagesOfGroup(Principal principal,
+//                                             @RequestParam(value = "groupId") long groupId,
+//                                             @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
+//                                             @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
 //
-//        Page<UserReceive> userReceivePage = userReceiveService.findByGroupChatId(groupId,page,size);
-//        //return movieService.getAllMovies(currentUser, page, size);
-//        return null;
+//        log.info("principal.getName() {}",principal.getName());
+//            boolean isMemberOfGroup = groupService.isUserMemberOfGroup(principal.getName() ,groupId);
+//            if(!isMemberOfGroup) return  ResponseEntity.badRequest().build();
+//
+//
+//        PagedResponse resultGroupMessage = messageService.findMessageByGroupId(groupId,page,size);
+//            return  ResponseEntity.ok(resultGroupMessage);
 //    }
-
-    @GetMapping
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity getMessagesOfGroup(Principal principal,
-                                             @RequestParam(value = "groupId") long groupId,
-                                             @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
-                                             @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
-
-        log.info("principal.getName() {}",principal.getName());
-            boolean isMemberOfGroup = groupService.isUserMemberOfGroup(principal.getName() ,groupId);
-            if(!isMemberOfGroup) return  ResponseEntity.badRequest().build();
-
-
-        PagedResponse resultGroupMessage = messageService.findMessageByGroupId(groupId,page,size);
-            return  ResponseEntity.ok(resultGroupMessage);
-    }
 
 }

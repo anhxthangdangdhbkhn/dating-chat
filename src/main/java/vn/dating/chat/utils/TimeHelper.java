@@ -33,4 +33,10 @@ public class TimeHelper {
         Instant instant = localDateTime.atZone(japanZoneId).toInstant();
         return  instant;
     }
+
+    public static Instant milliToInstant(Long time){
+        Instant instant = Instant.ofEpochMilli(time);
+        instant.atZone(ZoneId.systemDefault());
+        return  instant;
+    }
 }

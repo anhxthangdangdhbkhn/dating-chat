@@ -5,12 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.dating.chat.dto.messages.api.ResultGroupDto;
+import vn.dating.chat.dto.messages.api.ResultGroupMembersAndMessagesOfGroupDto;
+import vn.dating.chat.dto.messages.api.ResultGroupMembersOfGroupDto;
 import vn.dating.chat.mapper.GroupMapper;
-import vn.dating.chat.mapper.MessageMapper;
 import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.*;
 import vn.dating.chat.repositories.GroupMemberRepository;
@@ -37,6 +36,9 @@ public class GroupService {
     private UserService userService;
 
     @Autowired
+    private MessageService messageService;
+
+    @Autowired
     private EntityManager entityManager;
 
 
@@ -48,20 +50,8 @@ public class GroupService {
         return groupMemberRepository.findByGroupIdAndUserId(groupId,userId);
     }
 
-    public Group getGroupByName(String name) {
-        return groupRepository.findByName(name).orElse(null);
-    }
-
-    public List<Group> getAllGroups() {
-        return groupRepository.findAll();
-    }
-
     public Group saveGroup(Group group) {
         return groupRepository.save(group);
-    }
-
-    public void deleteGroupById(Long id) {
-        groupRepository.deleteById(id);
     }
 
     public boolean addUsersToGroup(Group group, List<User> membersToAdd,GroupMemberType groupMemberType) {
@@ -99,22 +89,23 @@ public class GroupService {
 //        return groupMembers;
 //    }
 
-    public Map<Group, List<User>> getGroupsForUser(long userId){
 
-        List<GroupMember> groupMembers = groupMemberRepository.findByUserId(userId);
-        Map<Group, List<User>> groupsAndMembers = new HashMap<>();
-        for (GroupMember groupMember : groupMembers) {
-            Group group = groupMember.getGroup();
-            List<GroupMember> groupMemberByGrId =  groupMemberRepository.findByGroupId(group.getId());
-            List<User> members = new ArrayList<>();
-            groupMemberByGrId.forEach(g->{
-                members.add(g.getUser());
-            });
-            groupsAndMembers.put(group, members);
-        }
+    public ResultGroupMembersAndMessagesOfGroupDto getGroupMembersAndLastMessagesOfGroup(Group group, String currentEmail){
+        List<GroupMember> groupMembers = group.getMembers();
+        List<Message> messages = messageService.getLastTenMessagesByGroupId(group.getId());
+        ResultGroupMembersAndMessagesOfGroupDto resultGroupMembersAndMessagesOfGroupDto =  GroupMapper.toGetMemberAndLastMessagesOfGroup(group,groupMembers,messages);
 
-        return groupsAndMembers;
+        if(groupMembers.size()==2){
+            if(groupMembers.get(1).getUser().getEmail().contains(currentEmail)){
+                resultGroupMembersAndMessagesOfGroupDto.setAvatar(groupMembers.get(0).getUser().getAvatar());
+                resultGroupMembersAndMessagesOfGroupDto.setName(groupMembers.get(0).getUser().getUsername());
+            }else {
+                resultGroupMembersAndMessagesOfGroupDto.setAvatar(groupMembers.get(1).getUser().getAvatar());
+                resultGroupMembersAndMessagesOfGroupDto.setName(groupMembers.get(1).getUser().getUsername());
+            }
 
+        }else resultGroupMembersAndMessagesOfGroupDto.setAvatar("https://via.placeholder.com/50x50");
+        return resultGroupMembersAndMessagesOfGroupDto;
     }
     public PagedResponse findGroupOfUser(User currentUser, int page, int size){
 
@@ -129,20 +120,22 @@ public class GroupService {
         }
 
         List<Group> groupList = groupPage.stream().toList();
-        List<ResultGroupDto> resultGroupDtos = new ArrayList<>();
+        List<ResultGroupMembersOfGroupDto> resultGroupMembersOfGroupDtos = new ArrayList<>();
 
         for(int index=0;index<groupList.size();index++){
             Group group = groupList.get(index);
-            resultGroupDtos.add(getChatInfoGroup(group,currentUser));
+            resultGroupMembersOfGroupDtos.add(getChatInfoGroup(group,currentUser));
         }
-        return new PagedResponse<>(resultGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
+        return new PagedResponse<>(resultGroupMembersOfGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
                 groupPage.getTotalPages(), groupPage.isLast());
     }
 
-    public PagedResponse findTopGroupOfUser(User currentUser, int page, int size){
+
+    public PagedResponse findTopGroupsAndTopMessagesOfUser(User currentUser, int page, int size){
 
         Pageable pageable = PageRequest.of(page, size);
         Long userId  = currentUser.getId();
+        String currentUserEmail = currentUser.getEmail();;
         Page<Group> groupPage =   groupRepository.findGroupsByUserIdOrderByLastMessage(userId,pageable);
 
 
@@ -152,37 +145,15 @@ public class GroupService {
         }
 
         List<Group> groupList = groupPage.stream().toList();
-        List<ResultGroupDto> resultGroupDtos = new ArrayList<>();
+        List<ResultGroupMembersAndMessagesOfGroupDto> resultGroupMembersAndMessagesOfGroupDtos = new ArrayList<>();
 
         for(int index=0;index<groupList.size();index++){
             Group group = groupList.get(index);
-            resultGroupDtos.add(getChatInfoGroup(group,currentUser));
+            resultGroupMembersAndMessagesOfGroupDtos.add(getGroupMembersAndLastMessagesOfGroup(group,currentUserEmail));
         }
-        return new PagedResponse<>(resultGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
+        return new PagedResponse<>(resultGroupMembersAndMessagesOfGroupDtos, groupPage.getNumber(), groupPage.getSize(), groupPage.getTotalElements(),
                 groupPage.getTotalPages(), groupPage.isLast());
     }
-
-    public List<String> getAllUserOfGroup(long groupId){
-
-        log.info("groupId:" +groupId );
-        List<GroupMember> groupMemberList = groupMemberRepository.findByUserId(groupId);
-        log.info("Member group size: ",groupMemberList.size());
-        List<String> listUsers = new ArrayList<>();
-//        groupMemberList.forEach(m->{
-//            listUsers.add(m.getUser().getEmail());
-//        });
-
-        return  listUsers;
-    }
-
-//    public boolean isUserMemberOfGroup(String userEmail, Long groupId) {
-//        TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(u) FROM user u JOIN u.groups g WHERE u.email = :userEmail AND g.id = :groupId", Long.class);
-//        query.setParameter("userEmail", userEmail);
-//        query.setParameter("groupId", groupId);
-//
-//        Long count = query.getSingleResult();
-//        return count > 0;
-//    }
 
     public boolean isUserMemberOfGroup(String userEmail, Long groupId) {
         TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(gm) FROM GroupMember as gm, User as u  WHERE u.email = :userEmail AND gm.id = :groupId", Long.class);
@@ -209,29 +180,6 @@ public class GroupService {
 //        return count > 0;
 //    }
 
-    public boolean existChatTwoUser(Long userId1, Long userId2) {
-
-        String jpql = "SELECT gm.group.id FROM GroupMember gm " +
-                "WHERE gm.user.id IN (:userId1, :userId2) " +
-                "AND gm.group.type = :groupType " +
-                "AND gm.type = :groupMemberType " +
-                "GROUP BY gm.group.id " +
-                "HAVING COUNT(gm.group.id) = 2";
-
-        Query query = entityManager.createQuery(jpql);
-        query.setParameter("userId1", userId1);
-        query.setParameter("userId2", userId2);
-        query.setParameter("groupType", GroupType.PRIVATE);
-        query.setParameter("groupMemberType", GroupMemberType.PRIVATE);
-
-        List<Long> result = query.getResultList();
-
-        if (result.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
     public List<Long> existChatTwoUser(String userEmail1, String userEmail2) {
 
         String jpql = "SELECT gm.group.id FROM GroupMember gm " +
@@ -256,83 +204,72 @@ public class GroupService {
         }
     }
 
-    public ResultGroupDto getChatInfoGroup( Group group, User current){
+    public ResultGroupMembersOfGroupDto getChatInfoGroup(Group group, User current){
 
-        ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
+        ResultGroupMembersOfGroupDto resultGroupMembersOfGroupDto = GroupMapper.toGetGroup(group);
 
         List<User> members = userService.getUsersInGroup(group.getId());
 
         if(members.size()==2){
             if(members.get(1).getEmail().contains(current.getEmail())){
-                resultGroupDto.setAvatar(members.get(0).getAvatar());
-                resultGroupDto.setName(members.get(0).getUsername());
+                resultGroupMembersOfGroupDto.setAvatar(members.get(0).getAvatar());
+                resultGroupMembersOfGroupDto.setName(members.get(0).getUsername());
             }else {
-                resultGroupDto.setAvatar(members.get(1).getAvatar());
-                resultGroupDto.setName(members.get(1).getUsername());
+                resultGroupMembersOfGroupDto.setAvatar(members.get(1).getAvatar());
+                resultGroupMembersOfGroupDto.setName(members.get(1).getUsername());
             }
 
-        }else resultGroupDto.setAvatar("https://via.placeholder.com/50x50");
-        resultGroupDto.setMembers(UserMapper.toGetListUsers(members));
+        }else resultGroupMembersOfGroupDto.setAvatar("https://via.placeholder.com/50x50");
+        resultGroupMembersOfGroupDto.setMembers(UserMapper.toGetListUsers(members));
 
-        return resultGroupDto;
+        return resultGroupMembersOfGroupDto;
     }
 
-    public ResultGroupDto getChatInfoGroup(Long groupId, User current){
+    public ResultGroupMembersOfGroupDto getChatInfoGroup(Long groupId, User current){
         Group group = getGroupById(groupId);
-        ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
+        ResultGroupMembersOfGroupDto resultGroupMembersOfGroupDto = GroupMapper.toGetGroup(group);
 
         List<User> members = userService.getUsersInGroup(groupId);
 
         if(members.size()==2){
             if(members.get(1).getEmail().contains(current.getEmail())){
-                resultGroupDto.setAvatar(members.get(0).getAvatar());
-                resultGroupDto.setName(members.get(0).getUsername());
+                resultGroupMembersOfGroupDto.setAvatar(members.get(0).getAvatar());
+                resultGroupMembersOfGroupDto.setName(members.get(0).getUsername());
             }else {
-                resultGroupDto.setAvatar(members.get(1).getAvatar());
-                resultGroupDto.setName(members.get(1).getUsername());
+                resultGroupMembersOfGroupDto.setAvatar(members.get(1).getAvatar());
+                resultGroupMembersOfGroupDto.setName(members.get(1).getUsername());
             }
 
-        }else resultGroupDto.setAvatar("https://via.placeholder.com/50x50");
-        resultGroupDto.setMembers(UserMapper.toGetListUsers(members));
+        }else resultGroupMembersOfGroupDto.setAvatar("https://via.placeholder.com/50x50");
+        resultGroupMembersOfGroupDto.setMembers(UserMapper.toGetListUsers(members));
 
-        return resultGroupDto;
+        return resultGroupMembersOfGroupDto;
     }
-    public ResultGroupDto createGroup(Group group, List<User> userList,User current,GroupMemberType groupMemberType){
+    public ResultGroupMembersOfGroupDto createGroup(Group group, List<User> userList, User current, GroupMemberType groupMemberType){
 
 
         boolean checkAdd = addUsersToGroup(group,userList,groupMemberType);
 //        if(checkAdd== false) return new ResultGroupDto();
 
 
-        ResultGroupDto resultGroupDto = GroupMapper.toGetGroup(group);
+        ResultGroupMembersOfGroupDto resultGroupMembersOfGroupDto = GroupMapper.toGetGroup(group);
         List<User> groupUser = userService.getUsersInGroup(group.getId());
 
         if(userList.size()==2){
             if(userList.get(1).getEmail().contains(current.getEmail())){
-                resultGroupDto.setAvatar(userList.get(0).getAvatar());
-                resultGroupDto.setName(userList.get(0).getUsername());
+                resultGroupMembersOfGroupDto.setAvatar(userList.get(0).getAvatar());
+                resultGroupMembersOfGroupDto.setName(userList.get(0).getUsername());
             }else {
-                resultGroupDto.setAvatar(userList.get(1).getAvatar());
-                resultGroupDto.setName(userList.get(1).getUsername());
+                resultGroupMembersOfGroupDto.setAvatar(userList.get(1).getAvatar());
+                resultGroupMembersOfGroupDto.setName(userList.get(1).getUsername());
             }
 
-        }else resultGroupDto.setAvatar("https://via.placeholder.com/50x50");
+        }else resultGroupMembersOfGroupDto.setAvatar("https://via.placeholder.com/50x50");
 
-        resultGroupDto.setMembers(UserMapper.toGetListUsers(groupUser));
+        resultGroupMembersOfGroupDto.setMembers(UserMapper.toGetListUsers(groupUser));
 
-        return resultGroupDto;
+        return resultGroupMembersOfGroupDto;
     }
 
-//    List<Group> getMessagesOfGroupsByTime(){
-//        Long userId = 1L;
-//        int pageNumber = 0;
-//        int pageSize = 10;
-//        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("updatedAt").descending());
-//        Page<Group> groupPage = groupRepository.findByUserIdOrderByLatestMessageCreatedAtDesc(userId, pageable);
-//
-//        List<Group> groupList = groupPage.getContent();
-//
-//        return groupList;
-//    }
 }
 

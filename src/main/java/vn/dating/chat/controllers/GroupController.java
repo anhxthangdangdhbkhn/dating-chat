@@ -2,15 +2,12 @@ package vn.dating.chat.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.dating.chat.dto.messages.api.CreatePublicGroupDto;
 import vn.dating.chat.dto.messages.api.CreatePrivateGroupDto;
-import vn.dating.chat.dto.messages.api.ResultGroupDto;
-import vn.dating.chat.mapper.GroupMapper;
-import vn.dating.chat.mapper.UserMapper;
+import vn.dating.chat.dto.messages.api.ResultGroupMembersOfGroupDto;
 import vn.dating.chat.model.*;
 import vn.dating.chat.services.GroupMemberService;
 import vn.dating.chat.services.GroupService;
@@ -18,11 +15,11 @@ import vn.dating.chat.services.MessageService;
 import vn.dating.chat.services.UserService;
 import vn.dating.chat.utils.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/groups")
@@ -74,8 +71,8 @@ public class GroupController {
                 if (group == null) {
                     return ResponseEntity.badRequest().build();
                 } else {
-                    ResultGroupDto resultGroupDto = groupService.createGroup(group, userList, currentUser, GroupMemberType.PRIVATE);
-                    return ResponseEntity.ok(resultGroupDto);
+                    ResultGroupMembersOfGroupDto resultGroupMembersOfGroupDto = groupService.createGroup(group, userList, currentUser, GroupMemberType.PRIVATE);
+                    return ResponseEntity.ok(resultGroupMembersOfGroupDto);
                 }
             }
             else if(listGroup.size()==1){
@@ -130,8 +127,8 @@ public class GroupController {
             if(group==null){
                 return  ResponseEntity.badRequest().build();
             }else{
-                ResultGroupDto resultGroupDto = groupService.createGroup(group,userList,currentUser,GroupMemberType.JOINED);
-                return ResponseEntity.ok(resultGroupDto);
+                ResultGroupMembersOfGroupDto resultGroupMembersOfGroupDto = groupService.createGroup(group,userList,currentUser,GroupMemberType.JOINED);
+                return ResponseEntity.ok(resultGroupMembersOfGroupDto);
             }
 
         }else {
@@ -139,22 +136,9 @@ public class GroupController {
         }
     }
 
-//    @PutMapping("/{id}")
-//    @PreAuthorize("hasRole('USER')")
-//    public ResponseEntity<Group> updateGroup(@PathVariable Long id, @RequestBody Group updatedGroup) {
-//        Group existingGroup = groupService.getGroupById(id);
-//        if (existingGroup == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        existingGroup.setName(updatedGroup.getName());
-//        groupService.saveGroup(existingGroup);
-//        return ResponseEntity.ok(existingGroup);
-//    }
-
-    @GetMapping("/{groupId}")
+    @GetMapping("/{groupId}/member")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity getGroup(@PathVariable Long groupId,Principal principal) {
-
+    public ResponseEntity getMembersOfGroup(@PathVariable Long groupId,Principal principal, HttpServletRequest request) {
         Group existingGroup = groupService.getGroupById(groupId);
         String principalName = principal.getName();
         User currentUser = userService.findByEmail(principalName).orElse(null);
@@ -166,6 +150,21 @@ public class GroupController {
         return ResponseEntity.ok(groupService.getChatInfoGroup(groupId,currentUser));
     }
 
+    @GetMapping("/{groupId}/connect")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity getConnectToGroup(@PathVariable Long groupId,Principal principal) {
+
+        Group existingGroup = groupService.getGroupById(groupId);
+        String principalName = principal.getName();
+        User currentUser = userService.findByEmail(principalName).orElse(null);
+
+        if (existingGroup == null || currentUser==null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(groupService.getGroupMembersAndLastMessagesOfGroup(existingGroup,principalName));
+    }
+
     @GetMapping("/private/with/{email}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity chatPrivateWithUser(@PathVariable String  email,Principal principal){
@@ -173,16 +172,19 @@ public class GroupController {
         String principalName = principal.getName();
         User currentUser = userService.findByEmail(principalName).orElse(null);
 
-        if (withUser == null || currentUser==null) {
-            return ResponseEntity.badRequest().build();
+        if (currentUser==null) {
+            return ResponseEntity.notFound().build();
         }
+        if(withUser == null  )   return ResponseEntity.notFound().build();
+
 
         List<Long> listGroup = groupService.existChatTwoUser(principalName, withUser.getEmail());
         if(listGroup ==null){
-            return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,UserMapper.toGetContact(withUser)));
+            return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,"Group is not exist"));
         } else if (listGroup.size()==1) {
             long groupId = listGroup.get(0);
-            return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,groupService.getChatInfoGroup(groupId,currentUser)));
+            Group group = groupService.getGroupById(groupId);
+            return ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,groupService.getGroupMembersAndLastMessagesOfGroup(group,currentUser.getEmail())));
         }
         return ResponseEntity.badRequest().build();
     }
@@ -197,11 +199,12 @@ public class GroupController {
         User currentUser = userService.findByEmail(principal.getName()).orElse(null);
         PagedResponse pagedResponse = groupService.findGroupOfUser(currentUser,page,size);
 
-        return  ResponseEntity.ok(pagedResponse);
-//        if(resultGroupDtos.size()==0){
-//            return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
-//        }
-//        return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,resultGroupDtos));
+
+        if(pagedResponse.getSize()==0){
+            return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
+        }
+        return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,pagedResponse));
+
     }
 
     @GetMapping("/top")
@@ -211,9 +214,12 @@ public class GroupController {
                                                     @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size) {
 
         User currentUser = userService.findByEmail(principal.getName()).orElse(null);
-        PagedResponse pagedResponse = groupService.findTopGroupOfUser(currentUser,page,size);
+        PagedResponse pagedResponse = groupService.findTopGroupsAndTopMessagesOfUser(currentUser,page,size);
 
-        return  ResponseEntity.ok(pagedResponse);
+        if(pagedResponse.getSize()==0){
+            return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
+        }
+        return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,pagedResponse));
     }
 
     @GetMapping("/next/{groupId}")
@@ -235,15 +241,11 @@ public class GroupController {
     public ResponseEntity getBeforeMessageOfGroup(@PathVariable Long groupId,Principal principal,
                                                   @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int page,
                                                   @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size,
-                                                  @RequestParam(value = "time") String createdAtAfter) {
+                                                  @RequestParam(value = "time") Long createdAtAfter) {
 
+//        Instant afterTime = TimeHelper.strToInstant(createdAtAfter);
 
-        Instant afterTime = TimeHelper.strToInstant(createdAtAfter);
-
-
-
-
-
+        Instant afterTime = TimeHelper.milliToInstant(createdAtAfter);
 
         Group existingGroup = groupService.getGroupById(groupId);
         String principalName = principal.getName();
@@ -252,43 +254,6 @@ public class GroupController {
         if (existingGroup == null || currentUser==null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(messageService.findMessagesByGroupIdAfterOrderByCreatedAtDesc(groupId,page,size, afterTime));
     }
-//        if(resultGroupDtos.size()==0){
-//            return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EMPTY,null));
-//        }
-//        return  ResponseEntity.ok(new ApiGroupResponse(ApiGroupType.EXIST,resultGroupDtos));
-
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
-//        Group existingGroup = groupService.getGroupById(id);
-//        if (existingGroup == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        groupService.deleteGroupById(id);
-//        return ResponseEntity.noContent().build();
-//    }
-//
-//    @PostMapping("/{groupId}/members")
-//    public ResponseEntity<GroupMember> addGroupMember(@PathVariable Long groupId, @RequestBody GroupMember groupMember) {
-//        Group existingGroup = groupService.getGroupById(groupId);
-//        if (existingGroup == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        groupMember.setGroup(existingGroup);
-//        groupMemberService.saveGroupMember(groupMember);
-//        return ResponseEntity.ok(groupMember);
-//    }
-//
-//    @DeleteMapping("/{groupId}/members/{id}")
-//    public ResponseEntity<Void> removeGroupMember(@PathVariable Long groupId, @PathVariable Long id) {
-//        GroupMember existingGroupMember = groupMemberService.getGroupMemberById(id);
-//        if (existingGroupMember == null || !existingGroupMember.getGroup().getId().equals(groupId)) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        groupMemberService.deleteGroupMemberById(id);
-//        return ResponseEntity.noContent().build();
-//    }
-
 }

@@ -16,22 +16,8 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     Optional<Group> findByName(String name);
 
-
-
-//    @Query(value = "SELECT g FROM Group g WHERE :userId IN (SELECT m.sender.id FROM Message m WHERE m.group.id = g.id) ORDER BY (SELECT MAX(m.createdAt) FROM Message m WHERE m.group.id = g.id) DESC",nativeQuery = true)
-//    Page<Group> findByUserIdOrderByLatestMessageCreatedAtDesc(Long userId, Pageable pageable);
-
-
-//    @Query(value ="SELECT DISTINCT g FROM group g JOIN g.members m WHERE m.user.id = :userId",nativeQuery = true)
-//    Page<Group> findDistinctByMembersUserId(@Param("userId") Long userId, Pageable pageable);
-
     @Query(value ="SELECT DISTINCT g.* FROM public.group g JOIN group_member m ON g.id = m.group_id WHERE m.user_id = :userId",nativeQuery = true)
     Page<Group> findDistinctByMembersUserId(@Param("userId") Long userId, Pageable pageable);
-
-//    @Query(value ="SELECT g FROM public.group g JOIN g.messages m JOIN m.receivers r WHERE r.receiver.id = :userId GROUP BY g.id ORDER BY MAX(m.createdAt) DESC",nativeQuery = true)
-//    Page<Group> findByUserIdOrderByMessageCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
-
-
 
     @Query(value ="SELECT g.* "
             + "FROM public.group g "
@@ -42,13 +28,6 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
             + "HAVING MAX(m.created_at) IS NOT NULL "
             + "ORDER BY MAX(m.created_at) DESC",nativeQuery = true)
     Page<Group> findGroupsByUserIdOrderByLastMessage(@Param("userId") Long userId, Pageable pageable);
-
-
-
-
-
-
-
 
 }
 

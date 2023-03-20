@@ -5,18 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.dating.chat.dto.messages.api.ResultGroupDto;
+import vn.dating.chat.dto.messages.api.ResultGroupMembersOfGroupDto;
 import vn.dating.chat.dto.messages.api.ResultGroupMessage;
-import vn.dating.chat.dto.messages.api.ResultMessage;
 import vn.dating.chat.dto.messages.socket.MessagePrivateDto;
 import vn.dating.chat.dto.messages.socket.MessagePrivateGroupDto;
-import vn.dating.chat.dto.messages.socket.MessagePrivateGroupOutputDto;
 import vn.dating.chat.mapper.MessageMapper;
-import vn.dating.chat.mapper.UserMapper;
 import vn.dating.chat.model.*;
 import vn.dating.chat.repositories.GroupMemberRepository;
 import vn.dating.chat.repositories.GroupRepository;
@@ -30,7 +26,6 @@ import java.math.BigInteger;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,9 +56,6 @@ public class MessageService {
     private EntityManager entityManager;
 
 
-
-
-
     public void sendPrivateToUser( MessagePrivateDto newMessage) {
         messagingTemplate.convertAndSendToUser(newMessage.getRecipientId(),"/topic/private-messages", newMessage);
     }
@@ -85,51 +77,6 @@ public class MessageService {
         List<User> result = query.getResultList();
         return result;
     }
-
-    public List<String> getAllUserOfGroup(long groupId){
-
-        log.info("groupId:" +groupId );
-        List<GroupMember> groupMemberList = groupMemberRepository.findByGroupId(groupId);
-        log.info("Member group size: ",groupMemberList.size());
-        List<String> listUsers = new ArrayList<>();
-        groupMemberList.forEach(m->{
-            listUsers.add(m.getUser().getEmail());
-        });
-
-        return  listUsers;
-    }
-
-//    public void saveMessageWithReceivers( Message message, List<UserReceive> receivers) {
-//        try {
-//            entityManager.getTransaction().begin();
-//
-//            // Save the message
-//            entityManager.createNativeQuery("INSERT INTO message (content, delete, group_id, sender_id) VALUES (?, ?, ?, ?)")
-//                    .setParameter(1, message.getContent())
-//                    .setParameter(2, message.isDelete())
-//                    .setParameter(3, message.getGroup().getId())
-//                    .setParameter(4, message.getSender().getId())
-//                    .executeUpdate();
-//
-//            // Get the ID of the new message
-//            Long messageId = ((BigInteger) entityManager.createNativeQuery("SELECT LAST_INSERT_ID()").getSingleResult()).longValue();
-//
-//            // Save the receivers
-//            for (UserReceive receiver : receivers) {
-//                entityManager.createNativeQuery("INSERT INTO user_receive (delete, read_at, receive_chat_id, receive_user_id) VALUES (?, ?, ?, ?)")
-//                        .setParameter(1, receiver.isDelete())
-//                        .setParameter(2, receiver.getReadAt())
-//                        .setParameter(3, messageId)
-//                        .setParameter(4, receiver.getUserReceive().getId())
-//                        .executeUpdate();
-//            }
-//
-//            entityManager.getTransaction().commit();
-//        } catch (Exception e) {
-//            entityManager.getTransaction().rollback();
-//            throw e;
-//        }
-//    }
 
     Long saveMessage(Message message) throws SQLException {
         entityManager.getTransaction().begin();
@@ -169,7 +116,6 @@ public class MessageService {
         } catch (Exception e) {
             entityManager.getTransaction().rollback();
             return null;
-//            throw new RuntimeException("Failed to save message: " + e.getMessage());
         }
     }
 
@@ -244,6 +190,13 @@ public class MessageService {
         return new PagedResponse<>(MessageMapper.toMessages(messagePage.getContent()).stream().toList(), messagePage.getNumber(), messagePage.getSize(), messagePage.getTotalElements(),
                 messagePage.getTotalPages(), messagePage.isLast());
     }
+
+    public  List<Message> getLastTenMessagesByGroupId(Long groupId){
+        Pageable pageable = PageRequest.of(0, 10); // get first 10 messages
+        List<Message> messages = messageRepository.findLastTenMessagesByGroupId(groupId, pageable);
+        return messages;
+    }
+
 
     @Transactional
     public boolean saveMessageWithReceivers(String content,Long groupId, Long userId, List<Long> receiverIds) {
@@ -354,7 +307,7 @@ public class MessageService {
         return resultGroupMessage;
     }
 
-    public void sendMessageCreatedGroup(ResultGroupDto resultGroupDto, Principal principal) {
+    public void sendMessageCreatedGroup(ResultGroupMembersOfGroupDto resultGroupMembersOfGroupDto, Principal principal) {
 
 //        List<String> listUsers = getAllUserOfGroup(messagePrivateGroupOutputDto.getGroupId());
 //        if(listUsers.contains(principal.getName())){

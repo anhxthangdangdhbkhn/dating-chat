@@ -20,9 +20,4 @@ public class ResultGroupMessage {
     private String senderUsername;
     private String senderEmail;
     private Instant createdAt;
-//    private List<ResultMessage> messages = new ArrayList<>();
-//
-//    public void addMessage(ResultMessage resultMessage){
-//        this.messages.add(resultMessage);
-//    }
 }
